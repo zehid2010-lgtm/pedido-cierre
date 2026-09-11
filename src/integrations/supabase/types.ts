@@ -14,16 +14,264 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      clientes_consolidado: {
+        Row: {
+          cliente: string
+          cumplimiento: number | null
+          id: number
+          importacion_id: string
+          razon_social: string | null
+          ruta: string | null
+        }
+        Insert: {
+          cliente: string
+          cumplimiento?: number | null
+          id?: number
+          importacion_id: string
+          razon_social?: string | null
+          ruta?: string | null
+        }
+        Update: {
+          cliente?: string
+          cumplimiento?: number | null
+          id?: number
+          importacion_id?: string
+          razon_social?: string | null
+          ruta?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clientes_consolidado_importacion_id_fkey"
+            columns: ["importacion_id"]
+            isOneToOne: false
+            referencedRelation: "importaciones"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      detalle_mpr: {
+        Row: {
+          cliente: string
+          cumplimiento: number | null
+          descripcion: string | null
+          faltante: number | null
+          id: number
+          importacion_id: string
+          mpr: string
+          pedido: number
+          razon_social: string | null
+          ruta: string | null
+          sugerencia: number
+        }
+        Insert: {
+          cliente: string
+          cumplimiento?: number | null
+          descripcion?: string | null
+          faltante?: number | null
+          id?: number
+          importacion_id: string
+          mpr: string
+          pedido?: number
+          razon_social?: string | null
+          ruta?: string | null
+          sugerencia?: number
+        }
+        Update: {
+          cliente?: string
+          cumplimiento?: number | null
+          descripcion?: string | null
+          faltante?: number | null
+          id?: number
+          importacion_id?: string
+          mpr?: string
+          pedido?: number
+          razon_social?: string | null
+          ruta?: string | null
+          sugerencia?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "detalle_mpr_importacion_id_fkey"
+            columns: ["importacion_id"]
+            isOneToOne: false
+            referencedRelation: "importaciones"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      equivalencias_mpr: {
+        Row: {
+          descripcion: string | null
+          mpr: string
+          unidades_por_pack: number | null
+          updated_at: string
+        }
+        Insert: {
+          descripcion?: string | null
+          mpr: string
+          unidades_por_pack?: number | null
+          updated_at?: string
+        }
+        Update: {
+          descripcion?: string | null
+          mpr?: string
+          unidades_por_pack?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      importaciones: {
+        Row: {
+          archivo_consolidado: string | null
+          archivo_detalle: string | null
+          created_at: string
+          created_by: string | null
+          estado: string
+          filas_consolidado: number
+          filas_detalle: number
+          id: string
+          notas: string | null
+        }
+        Insert: {
+          archivo_consolidado?: string | null
+          archivo_detalle?: string | null
+          created_at?: string
+          created_by?: string | null
+          estado?: string
+          filas_consolidado?: number
+          filas_detalle?: number
+          id?: string
+          notas?: string | null
+        }
+        Update: {
+          archivo_consolidado?: string | null
+          archivo_detalle?: string | null
+          created_at?: string
+          created_by?: string | null
+          estado?: string
+          filas_consolidado?: number
+          filas_detalle?: number
+          id?: string
+          notas?: string | null
+        }
+        Relationships: []
+      }
+      origen_consolidado: {
+        Row: {
+          data: Json
+          fila: number
+          id: number
+          importacion_id: string
+        }
+        Insert: {
+          data: Json
+          fila: number
+          id?: number
+          importacion_id: string
+        }
+        Update: {
+          data?: Json
+          fila?: number
+          id?: number
+          importacion_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "origen_consolidado_importacion_id_fkey"
+            columns: ["importacion_id"]
+            isOneToOne: false
+            referencedRelation: "importaciones"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      origen_detalle: {
+        Row: {
+          data: Json
+          fila: number
+          id: number
+          importacion_id: string
+        }
+        Insert: {
+          data: Json
+          fila: number
+          id?: number
+          importacion_id: string
+        }
+        Update: {
+          data?: Json
+          fila?: number
+          id?: number
+          importacion_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "origen_detalle_importacion_id_fkey"
+            columns: ["importacion_id"]
+            isOneToOne: false
+            referencedRelation: "importaciones"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          email: string | null
+          id: string
+          nombre: string
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          id: string
+          nombre?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          nombre?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      is_admin: { Args: never; Returns: boolean }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "administrador" | "desarrollo"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +398,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["administrador", "desarrollo"],
+    },
   },
 } as const
