@@ -10,33 +10,108 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as AuthenticatedEquivalenciasRouteImport } from './routes/_authenticated/equivalencias'
+import { Route as AuthenticatedPanelRouteImport } from './routes/_authenticated/panel'
+import { Route as AuthenticatedPendientesRouteImport } from './routes/_authenticated/pendientes'
+import { Route as AuthenticatedClientesIndexRouteImport } from './routes/_authenticated/clientes.index'
+import { Route as AuthenticatedClientesClienteRouteImport } from './routes/_authenticated/clientes.$cliente'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedEquivalenciasRoute =
+  AuthenticatedEquivalenciasRouteImport.update({
+    id: '/equivalencias',
+    path: '/equivalencias',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPanelRoute = AuthenticatedPanelRouteImport.update({
+  id: '/panel',
+  path: '/panel',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedPendientesRoute = AuthenticatedPendientesRouteImport.update({
+  id: '/pendientes',
+  path: '/pendientes',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedClientesIndexRoute =
+  AuthenticatedClientesIndexRouteImport.update({
+    id: '/clientes/',
+    path: '/clientes/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedClientesClienteRoute =
+  AuthenticatedClientesClienteRouteImport.update({
+    id: '/clientes/$cliente',
+    path: '/clientes/$cliente',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/equivalencias': typeof AuthenticatedEquivalenciasRoute
+  '/panel': typeof AuthenticatedPanelRoute
+  '/pendientes': typeof AuthenticatedPendientesRoute
+  '/clientes/$cliente': typeof AuthenticatedClientesClienteRoute
+  '/clientes/': typeof AuthenticatedClientesIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/equivalencias': typeof AuthenticatedEquivalenciasRoute
+  '/panel': typeof AuthenticatedPanelRoute
+  '/pendientes': typeof AuthenticatedPendientesRoute
+  '/clientes/$cliente': typeof AuthenticatedClientesClienteRoute
+  '/clientes': typeof AuthenticatedClientesIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/_authenticated/equivalencias': typeof AuthenticatedEquivalenciasRoute
+  '/_authenticated/panel': typeof AuthenticatedPanelRoute
+  '/_authenticated/pendientes': typeof AuthenticatedPendientesRoute
+  '/_authenticated/clientes/$cliente': typeof AuthenticatedClientesClienteRoute
+  '/_authenticated/clientes/': typeof AuthenticatedClientesIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/equivalencias'
+    | '/panel'
+    | '/pendientes'
+    | '/clientes/$cliente'
+    | '/clientes/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/equivalencias'
+    | '/panel'
+    | '/pendientes'
+    | '/clientes/$cliente'
+    | '/clientes'
+  id:
+    | '__root__'
+    | '/'
+    | '/_authenticated'
+    | '/_authenticated/equivalencias'
+    | '/_authenticated/panel'
+    | '/_authenticated/pendientes'
+    | '/_authenticated/clientes/$cliente'
+    | '/_authenticated/clientes/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +123,73 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/equivalencias': {
+      id: '/_authenticated/equivalencias'
+      path: '/equivalencias'
+      fullPath: '/equivalencias'
+      preLoaderRoute: typeof AuthenticatedEquivalenciasRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/panel': {
+      id: '/_authenticated/panel'
+      path: '/panel'
+      fullPath: '/panel'
+      preLoaderRoute: typeof AuthenticatedPanelRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/pendientes': {
+      id: '/_authenticated/pendientes'
+      path: '/pendientes'
+      fullPath: '/pendientes'
+      preLoaderRoute: typeof AuthenticatedPendientesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/clientes/': {
+      id: '/_authenticated/clientes/'
+      path: '/clientes'
+      fullPath: '/clientes/'
+      preLoaderRoute: typeof AuthenticatedClientesIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/clientes/$cliente': {
+      id: '/_authenticated/clientes/$cliente'
+      path: '/clientes/$cliente'
+      fullPath: '/clientes/$cliente'
+      preLoaderRoute: typeof AuthenticatedClientesClienteRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
+interface AuthenticatedRouteRouteChildren {
+  AuthenticatedEquivalenciasRoute: typeof AuthenticatedEquivalenciasRoute
+  AuthenticatedPanelRoute: typeof AuthenticatedPanelRoute
+  AuthenticatedPendientesRoute: typeof AuthenticatedPendientesRoute
+  AuthenticatedClientesClienteRoute: typeof AuthenticatedClientesClienteRoute
+  AuthenticatedClientesIndexRoute: typeof AuthenticatedClientesIndexRoute
+}
+
+const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedEquivalenciasRoute: AuthenticatedEquivalenciasRoute,
+  AuthenticatedPanelRoute: AuthenticatedPanelRoute,
+  AuthenticatedPendientesRoute: AuthenticatedPendientesRoute,
+  AuthenticatedClientesClienteRoute: AuthenticatedClientesClienteRoute,
+  AuthenticatedClientesIndexRoute: AuthenticatedClientesIndexRoute,
+}
+
+const AuthenticatedRouteRouteWithChildren =
+  AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
