@@ -1,7 +1,9 @@
 import { Link, useRouterState } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
 import { BarChart3, Boxes, ClipboardList, Upload, Users, LogOut } from "lucide-react";
 import type { ReactNode } from "react";
 import { useAuth } from "@/lib/auth";
+import { traerCruce } from "@/lib/datos";
 import { cn } from "@/lib/utils";
 
 const NAV = [
@@ -11,6 +13,58 @@ const NAV = [
   { to: "/equivalencias", label: "Packs", icon: Boxes, soloAdmin: false },
   { to: "/importar", label: "Importar", icon: Upload, soloAdmin: true },
 ] as const;
+
+type ReferenciaSemana = {
+  periodo: string;
+  semana: string;
+  desde: string;
+  hasta: string;
+};
+
+function referenciaSemana(fechaIso?: string | null): ReferenciaSemana | null {
+  if (!fechaIso) return null;
+
+  const ymd = fechaIso.slice(0, 10);
+  const partes = ymd.split("-").map(Number);
+
+  if (partes.length !== 3 || partes.some((n) => !Number.isFinite(n))) {
+    return null;
+  }
+
+  const [anio, mes, diaMes] = partes;
+  const fecha = new Date(Date.UTC(anio, mes - 1, diaMes));
+
+  // Semana ISO: lunes a domingo.
+  const diaSemana = fecha.getUTCDay() || 7;
+
+  const lunes = new Date(fecha);
+  lunes.setUTCDate(fecha.getUTCDate() - (diaSemana - 1));
+
+  const domingo = new Date(lunes);
+  domingo.setUTCDate(lunes.getUTCDate() + 6);
+
+  const jueves = new Date(fecha);
+  jueves.setUTCDate(fecha.getUTCDate() + (4 - diaSemana));
+
+  const anioSemana = jueves.getUTCFullYear();
+  const inicioAnio = new Date(Date.UTC(anioSemana, 0, 1));
+  const numeroSemana = Math.ceil(
+    (((jueves.getTime() - inicioAnio.getTime()) / 86400000) + 1) / 7,
+  );
+
+  const fmt = new Intl.DateTimeFormat("es-AR", {
+    day: "2-digit",
+    month: "2-digit",
+    timeZone: "UTC",
+  });
+
+  return {
+    periodo: `${anio}${String(mes).padStart(2, "0")}`,
+    semana: `${anioSemana}${String(numeroSemana).padStart(2, "0")}`,
+    desde: fmt.format(lunes),
+    hasta: fmt.format(domingo),
+  };
+}
 
 export function AppShell({
   titulo,
@@ -25,6 +79,13 @@ export function AppShell({
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const items = NAV.filter((i) => !i.soloAdmin || esAdmin);
 
+  const { data } = useQuery({
+    queryKey: ["cruce"],
+    queryFn: traerCruce,
+  });
+
+  const referencia = referenciaSemana(data?.importacion.created_at);
+
   return (
     <div className="min-h-screen bg-background pb-24">
       <header className="brand-gradient sticky top-0 z-30 text-primary-foreground shadow-raised">
@@ -34,9 +95,26 @@ export function AppShell({
               <p className="text-[11px] font-semibold uppercase tracking-[0.18em] opacity-70">
                 Pedido Sugerido · Desarrollo Tucumán
               </p>
+
               <h1 className="mt-1 truncate text-2xl font-bold uppercase">{titulo}</h1>
+
               {subtitulo ? <p className="mt-0.5 text-sm opacity-80">{subtitulo}</p> : null}
+
+              {referencia ? (
+                <div className="mt-3 flex flex-wrap gap-2 text-[11px] font-semibold">
+                  <span className="rounded-full bg-white/15 px-2.5 py-1">
+                    Período {referencia.periodo}
+                  </span>
+                  <span className="rounded-full bg-white/15 px-2.5 py-1">
+                    Semana {referencia.semana}
+                  </span>
+                  <span className="rounded-full bg-white/15 px-2.5 py-1">
+                    {referencia.desde} al {referencia.hasta}
+                  </span>
+                </div>
+              ) : null}
             </div>
+
             <button
               onClick={cerrarSesion}
               className="shrink-0 rounded-lg bg-white/10 p-2 transition-colors hover:bg-white/20"
@@ -45,8 +123,11 @@ export function AppShell({
               <LogOut className="size-4" />
             </button>
           </div>
+
           <div className="mt-3 flex items-center gap-2 text-xs opacity-85">
-            <span className="rounded-full bg-white/15 px-2.5 py-1 font-medium">{nombre || "Usuario"}</span>
+            <span className="rounded-full bg-white/15 px-2.5 py-1 font-medium">
+              {nombre || "Usuario"}
+            </span>
             <span className="rounded-full bg-white/15 px-2.5 py-1 font-medium capitalize">
               {rol ?? "…"}
             </span>
@@ -61,6 +142,7 @@ export function AppShell({
           {items.map((item) => {
             const activo = pathname === item.to || pathname.startsWith(item.to + "/");
             const Icono = item.icon;
+
             return (
               <Link
                 key={item.to}
