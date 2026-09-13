@@ -2,7 +2,22 @@ import type { ReactNode } from "react";
 import { claseBarra, claseSemaforo, ETIQUETA_SEMAFORO, semaforo, type Semaforo } from "@/lib/datos";
 import { cn } from "@/lib/utils";
 
-export function EstadoBadge({ estado }: { estado: Semaforo }) {
+export function EstadoBadge({
+  estado,
+  ambiguo = false,
+}: {
+  estado: Semaforo;
+  ambiguo?: boolean;
+}) {
+  if (ambiguo) {
+    return (
+      <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-foreground">
+        <span className="size-2 rounded-full bg-muted-foreground" />
+        Ambiguo
+      </span>
+    );
+  }
+
   return (
     <span
       className={cn(
