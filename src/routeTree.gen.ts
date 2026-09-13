@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthenticatedEquivalenciasRouteImport } from './routes/_authenticated/equivalencias'
+import { Route as AuthenticatedImportarRouteImport } from './routes/_authenticated/importar'
 import { Route as AuthenticatedPanelRouteImport } from './routes/_authenticated/panel'
 import { Route as AuthenticatedPendientesRouteImport } from './routes/_authenticated/pendientes'
 import { Route as AuthenticatedClientesIndexRouteImport } from './routes/_authenticated/clientes.index'
@@ -32,6 +33,11 @@ const AuthenticatedEquivalenciasRoute =
     path: '/equivalencias',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedImportarRoute = AuthenticatedImportarRouteImport.update({
+  id: '/importar',
+  path: '/importar',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedPanelRoute = AuthenticatedPanelRouteImport.update({
   id: '/panel',
   path: '/panel',
@@ -58,6 +64,7 @@ const AuthenticatedClientesClienteRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/equivalencias': typeof AuthenticatedEquivalenciasRoute
+  '/importar': typeof AuthenticatedImportarRoute
   '/panel': typeof AuthenticatedPanelRoute
   '/pendientes': typeof AuthenticatedPendientesRoute
   '/clientes/$cliente': typeof AuthenticatedClientesClienteRoute
@@ -66,6 +73,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/equivalencias': typeof AuthenticatedEquivalenciasRoute
+  '/importar': typeof AuthenticatedImportarRoute
   '/panel': typeof AuthenticatedPanelRoute
   '/pendientes': typeof AuthenticatedPendientesRoute
   '/clientes/$cliente': typeof AuthenticatedClientesClienteRoute
@@ -76,6 +84,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/_authenticated/equivalencias': typeof AuthenticatedEquivalenciasRoute
+  '/_authenticated/importar': typeof AuthenticatedImportarRoute
   '/_authenticated/panel': typeof AuthenticatedPanelRoute
   '/_authenticated/pendientes': typeof AuthenticatedPendientesRoute
   '/_authenticated/clientes/$cliente': typeof AuthenticatedClientesClienteRoute
@@ -86,6 +95,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/equivalencias'
+    | '/importar'
     | '/panel'
     | '/pendientes'
     | '/clientes/$cliente'
@@ -94,6 +104,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/equivalencias'
+    | '/importar'
     | '/panel'
     | '/pendientes'
     | '/clientes/$cliente'
@@ -103,6 +114,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/_authenticated/equivalencias'
+    | '/_authenticated/importar'
     | '/_authenticated/panel'
     | '/_authenticated/pendientes'
     | '/_authenticated/clientes/$cliente'
@@ -135,6 +147,13 @@ declare module '@tanstack/react-router' {
       path: '/equivalencias'
       fullPath: '/equivalencias'
       preLoaderRoute: typeof AuthenticatedEquivalenciasRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/importar': {
+      id: '/_authenticated/importar'
+      path: '/importar'
+      fullPath: '/importar'
+      preLoaderRoute: typeof AuthenticatedImportarRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/panel': {
@@ -170,6 +189,7 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedEquivalenciasRoute: typeof AuthenticatedEquivalenciasRoute
+  AuthenticatedImportarRoute: typeof AuthenticatedImportarRoute
   AuthenticatedPanelRoute: typeof AuthenticatedPanelRoute
   AuthenticatedPendientesRoute: typeof AuthenticatedPendientesRoute
   AuthenticatedClientesClienteRoute: typeof AuthenticatedClientesClienteRoute
@@ -178,6 +198,7 @@ interface AuthenticatedRouteRouteChildren {
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedEquivalenciasRoute: AuthenticatedEquivalenciasRoute,
+  AuthenticatedImportarRoute: AuthenticatedImportarRoute,
   AuthenticatedPanelRoute: AuthenticatedPanelRoute,
   AuthenticatedPendientesRoute: AuthenticatedPendientesRoute,
   AuthenticatedClientesClienteRoute: AuthenticatedClientesClienteRoute,

@@ -1,11 +1,48 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { AlertTriangle, CheckCircle2, Clock, Loader2, PackageSearch } from "lucide-react";
+import {
+  AlertTriangle,
+  Boxes,
+  CheckCircle2,
+  ClipboardList,
+  Clock,
+  Loader2,
+  PackageSearch,
+  Upload,
+  Users,
+} from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { BarraCumplimiento, SinDatos, Tarjeta } from "@/components/Indicadores";
 import { nf, nf1, traerCruce, type Semaforo } from "@/lib/datos";
+import { useAuth } from "@/lib/auth";
 import { Input } from "@/components/ui/input";
+
+const ACCESOS = [
+  { to: "/clientes", label: "Clientes", detalle: "Cumplimiento y faltante", icon: Users, soloAdmin: false },
+  {
+    to: "/pendientes",
+    label: "Pendientes Desarrollo",
+    detalle: "MPR con faltante > 0",
+    icon: ClipboardList,
+    soloAdmin: false,
+  },
+  {
+    to: "/equivalencias",
+    label: "Equivalencias MPR",
+    detalle: "Unidades por pack",
+    icon: Boxes,
+    soloAdmin: false,
+  },
+  {
+    to: "/importar",
+    label: "Importar Excel",
+    detalle: "Dos fuentes originales",
+    icon: Upload,
+    soloAdmin: true,
+  },
+] as const;
+
 
 export const Route = createFileRoute("/_authenticated/panel")({
   head: () => ({
@@ -23,7 +60,9 @@ export const Route = createFileRoute("/_authenticated/panel")({
 });
 
 function Panel() {
+  const { esAdmin } = useAuth();
   const { data, isLoading } = useQuery({ queryKey: ["cruce"], queryFn: traerCruce });
+
   const [ruta, setRuta] = useState("todas");
   const [estado, setEstado] = useState<Semaforo | "todos">("todos");
   const [busqueda, setBusqueda] = useState("");
@@ -177,6 +216,23 @@ function Panel() {
           </Link>
         </div>
       )}
+
+      <div className="mt-5 grid grid-cols-2 gap-3">
+        {ACCESOS.filter((a) => !a.soloAdmin || esAdmin).map((a) => (
+          <Link
+            key={a.to}
+            to={a.to}
+            className="rounded-2xl border border-border bg-surface p-4 shadow-card transition-colors hover:border-primary/40"
+          >
+            <span className="flex size-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
+              <a.icon className="size-5" />
+            </span>
+            <p className="mt-2 text-sm font-bold">{a.label}</p>
+            <p className="text-xs text-muted-foreground">{a.detalle}</p>
+          </Link>
+        ))}
+      </div>
     </AppShell>
+
   );
 }

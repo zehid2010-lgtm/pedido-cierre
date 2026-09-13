@@ -49,6 +49,45 @@ export type Database = {
           },
         ]
       }
+      compras_semanales: {
+        Row: {
+          cantidad_unidades: number
+          cliente: string
+          created_at: string
+          descripcion_mpr: string | null
+          fecha_venta: string
+          id: number
+          identificador_origen: string
+          mpr: string
+          razon_social: string | null
+          ruta: string | null
+        }
+        Insert: {
+          cantidad_unidades?: number
+          cliente: string
+          created_at?: string
+          descripcion_mpr?: string | null
+          fecha_venta: string
+          id?: number
+          identificador_origen: string
+          mpr: string
+          razon_social?: string | null
+          ruta?: string | null
+        }
+        Update: {
+          cantidad_unidades?: number
+          cliente?: string
+          created_at?: string
+          descripcion_mpr?: string | null
+          fecha_venta?: string
+          id?: number
+          identificador_origen?: string
+          mpr?: string
+          razon_social?: string | null
+          ruta?: string | null
+        }
+        Relationships: []
+      }
       detalle_mpr: {
         Row: {
           cliente: string
