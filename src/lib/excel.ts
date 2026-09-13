@@ -44,7 +44,7 @@ export async function leerHojaExport(archivo: File): Promise<{
     );
   }
 
-  const hoja = libro.Sheets[nombreHoja];
+  const hoja = libro.Sheets[nombreHoja]!;
   const filas = XLSX.utils.sheet_to_json<FilaOriginal>(hoja, { defval: null, raw: true });
   if (filas.length === 0) {
     throw new ErrorEstructura(`La hoja "${HOJA_REQUERIDA}" de "${archivo.name}" está vacía.`);
