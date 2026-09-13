@@ -58,6 +58,9 @@ export type FilaDetalle = {
   pedido: number;
   sugerencia: number;
   faltante: number;
+  cumplimientoPct?: number | null;
+  estadoCruceCliente?: string | null;
+  fechaVentas?: string | null;
 };
 
 export type FilaCliente = {
@@ -71,6 +74,9 @@ export type FilaCliente = {
   faltantePacks: number | null;
   equivalenciaPendiente: boolean;
   estado: Semaforo;
+  estadoVista?: string | null;
+  tieneAmbiguedad?: boolean;
+  fechaVentas?: string | null;
 };
 
 export async function traerUltimaImportacion(): Promise<Importacion | null> {
@@ -101,36 +107,60 @@ export async function traerEquivalencias(): Promise<Equivalencia[]> {
   return (data ?? []) as Equivalencia[];
 }
 
-async function traerTodo<T>(
-  tabla: "clientes_consolidado" | "detalle_mpr",
-  columnas: string,
-  importacionId: string,
-): Promise<T[]> {
+type VistaCliente = {
+  cliente: string | number;
+  razon_social: string | null;
+  ruta: string | number | null;
+  sugerido: number | string | null;
+  comprado: number | string | null;
+  faltante: number | string | null;
+  cumplimiento_pct: number | string | null;
+  estado: string | null;
+  tiene_ambiguedad: boolean | null;
+  fecha_ventas: string | null;
+};
+
+type VistaDetalle = {
+  cliente: string | number;
+  razon_social: string | null;
+  ruta: string | number | null;
+  mpr: string;
+  sugerencia: number | string | null;
+  comprado: number | string | null;
+  faltante: number | string | null;
+  cumplimiento_pct: number | string | null;
+  estado_cruce_cliente: string | null;
+  fecha_ventas: string | null;
+};
+
+type Orden = {
+  columna: string;
+  ascending?: boolean;
+};
+
+async function traerVistaCompleta<T>(tabla: string, columnas: string, ordenes: Orden[]): Promise<T[]> {
   const paso = 1000;
   let desde = 0;
   const acumulado: T[] = [];
+
   for (;;) {
-    const { data, error } = await supabase
-      .from(tabla)
-      .select(columnas)
-      .eq("importacion_id", importacionId)
-      .order("id")
-      .range(desde, desde + paso - 1);
+    let consulta = (supabase as any).from(tabla).select(columnas);
+    for (const orden of ordenes) {
+      consulta = consulta.order(orden.columna, { ascending: orden.ascending ?? true });
+    }
+
+    const { data, error } = await consulta.range(desde, desde + paso - 1);
     if (error) throw error;
-    const lote = (data ?? []) as unknown as T[];
+
+    const lote = (data ?? []) as T[];
     acumulado.push(...lote);
+
     if (lote.length < paso) break;
     desde += paso;
   }
+
   return acumulado;
 }
-
-export type Consolidado = {
-  cliente: string;
-  razon_social: string | null;
-  ruta: string | null;
-  cumplimiento: number | null;
-};
 
 export type Cruce = {
   importacion: Importacion;
@@ -142,85 +172,144 @@ export type Cruce = {
 };
 
 /**
- * Capa de procesamiento: cruza la fuente consolidada (oficial) con el detalle
- * por MPR. Nunca modifica las fuentes originales.
+ * Capa de lectura automática.
+ *
+ * La app ya no recalcula Pedido Sugerido desde la última importación: toma los
+ * resultados procesados por las vistas SQL que consumen las ventas cargadas por
+ * Power Automate. Se conserva la misma interfaz Cruce/FilaCliente/FilaDetalle
+ * para no romper las pantallas existentes.
  */
 export async function traerCruce(): Promise<Cruce | null> {
-  const importacion = await traerUltimaImportacion();
-  if (!importacion) return null;
-
-  const [consolidado, detalle, equivalencias] = await Promise.all([
-    traerTodo<Consolidado>("clientes_consolidado", "cliente,razon_social,ruta,cumplimiento", importacion.id),
-    traerTodo<FilaDetalle>(
-      "detalle_mpr",
-      "id,cliente,razon_social,ruta,mpr,descripcion,pedido,sugerencia,faltante",
-      importacion.id,
+  const [clientesVista, detalleVista, equivalencias, ultimaImportacion] = await Promise.all([
+    traerVistaCompleta<VistaCliente>(
+      "vw_pedido_sugerido_clientes",
+      "cliente,razon_social,ruta,sugerido,comprado,faltante,cumplimiento_pct,estado,tiene_ambiguedad,fecha_ventas",
+      [
+        { columna: "cumplimiento_pct", ascending: true },
+        { columna: "cliente", ascending: true },
+      ],
+    ),
+    traerVistaCompleta<VistaDetalle>(
+      "vw_pedido_sugerido_actual",
+      "cliente,razon_social,ruta,mpr,sugerencia,comprado,faltante,cumplimiento_pct,estado_cruce_cliente,fecha_ventas",
+      [
+        { columna: "cliente", ascending: true },
+        { columna: "mpr", ascending: true },
+      ],
     ),
     traerEquivalencias(),
+    traerUltimaImportacion(),
   ]);
+
+  if (clientesVista.length === 0 && detalleVista.length === 0) return null;
 
   const mapaEquiv = new Map<string, number>();
   const descripciones = new Map<string, string>();
   for (const e of equivalencias) {
-    if (e.unidades_por_pack && e.unidades_por_pack > 0) mapaEquiv.set(e.mpr, Number(e.unidades_por_pack));
+    if (e.unidades_por_pack && e.unidades_por_pack > 0) {
+      mapaEquiv.set(e.mpr, Number(e.unidades_por_pack));
+    }
     if (e.descripcion) descripciones.set(e.mpr, e.descripcion);
   }
 
-  const porCliente = new Map<string, FilaDetalle[]>();
+  const detalle: FilaDetalle[] = detalleVista.map((fila, index) => ({
+    id: index + 1,
+    cliente: String(fila.cliente),
+    razon_social: fila.razon_social,
+    ruta: fila.ruta === null || fila.ruta === undefined ? null : String(fila.ruta),
+    mpr: fila.mpr,
+    descripcion: descripciones.get(fila.mpr) ?? null,
+    // Se mantiene el nombre "pedido" porque las pantallas actuales ya lo usan.
+    // En esta versión representa la compra real calculada por la vista SQL.
+    pedido: Math.max(Number(fila.comprado ?? 0), 0),
+    sugerencia: Math.max(Number(fila.sugerencia ?? 0), 0),
+    faltante: Math.max(Number(fila.faltante ?? 0), 0),
+    cumplimientoPct:
+      fila.cumplimiento_pct === null || fila.cumplimiento_pct === undefined
+        ? null
+        : Math.max(Number(fila.cumplimiento_pct), 0),
+    estadoCruceCliente: fila.estado_cruce_cliente,
+    fechaVentas: fila.fecha_ventas,
+  }));
+
+  const detallePorCliente = new Map<string, FilaDetalle[]>();
   for (const fila of detalle) {
-    const lista = porCliente.get(fila.cliente);
+    const lista = detallePorCliente.get(fila.cliente);
     if (lista) lista.push(fila);
-    else porCliente.set(fila.cliente, [fila]);
+    else detallePorCliente.set(fila.cliente, [fila]);
   }
 
-  const oficial = new Map(consolidado.map((c) => [c.cliente, c]));
-  const claves = new Set<string>([...oficial.keys(), ...porCliente.keys()]);
+  const clientes: FilaCliente[] = clientesVista.map((fila) => {
+    const cliente = String(fila.cliente);
+    const cumplimiento =
+      fila.cumplimiento_pct === null || fila.cumplimiento_pct === undefined
+        ? null
+        : Math.max(Math.min(Number(fila.cumplimiento_pct), 100), 0);
 
-  const clientes: FilaCliente[] = [];
-  for (const clave of claves) {
-    const filas = porCliente.get(clave) ?? [];
-    const info = oficial.get(clave);
-    const sugerido = filas.reduce((a, f) => a + Number(f.sugerencia ?? 0), 0);
-    const comprado = filas.reduce((a, f) => a + Number(f.pedido ?? 0), 0);
-    // El faltante se suma por MPR: la sobrecompra de un MPR no compensa a otro.
-    const faltante = filas.reduce((a, f) => a + Number(f.faltante ?? 0), 0);
-
+    const filas = detallePorCliente.get(cliente) ?? [];
     let packs = 0;
     let pendiente = false;
-    for (const f of filas) {
-      if (Number(f.faltante ?? 0) <= 0) continue;
-      const uxp = mapaEquiv.get(f.mpr);
-      if (uxp) packs += Number(f.faltante) / uxp;
-      else pendiente = true;
+
+    for (const det of filas) {
+      if (det.faltante <= 0) continue;
+      const unidadesPorPack = mapaEquiv.get(det.mpr);
+      if (unidadesPorPack && unidadesPorPack > 0) {
+        packs += det.faltante / unidadesPorPack;
+      } else {
+        pendiente = true;
+      }
     }
 
-    const cumplimientoOficial =
-      info?.cumplimiento !== null && info?.cumplimiento !== undefined
-        ? Number(info.cumplimiento)
-        : sugerido > 0
-          ? Math.min((comprado / sugerido) * 100, 999)
-          : null;
+    const estadoVista = fila.estado ?? null;
+    const ambiguo = Boolean(fila.tiene_ambiguedad) || estadoVista === "AMBIGUO";
 
-    clientes.push({
-      cliente: clave,
-      razon_social: info?.razon_social ?? filas[0]?.razon_social ?? "Sin razón social",
-      ruta: info?.ruta ?? filas[0]?.ruta ?? "Sin ruta",
-      cumplimientoOficial,
-      sugerido,
-      comprado,
-      faltante,
+    return {
+      cliente,
+      razon_social: fila.razon_social ?? "Sin razón social",
+      ruta: fila.ruta === null || fila.ruta === undefined ? "Sin ruta" : String(fila.ruta),
+      cumplimientoOficial: cumplimiento,
+      sugerido: Math.max(Number(fila.sugerido ?? 0), 0),
+      comprado: Math.max(Number(fila.comprado ?? 0), 0),
+      faltante: Math.max(Number(fila.faltante ?? 0), 0),
       faltantePacks: packs > 0 ? packs : null,
       equivalenciaPendiente: pendiente,
-      estado: semaforo(cumplimientoOficial),
-    });
-  }
+      // Hasta que la UI tenga una etiqueta propia para AMBIGUO, se muestra como
+      // crítico para que nunca sea interpretado como cumplido.
+      estado: ambiguo ? "critico" : semaforo(cumplimiento),
+      estadoVista,
+      tieneAmbiguedad: ambiguo,
+      fechaVentas: fila.fecha_ventas,
+    };
+  });
 
-  clientes.sort((a, b) => (a.cumplimientoOficial ?? 0) - (b.cumplimientoOficial ?? 0));
+  clientes.sort((a, b) => {
+    if (a.tieneAmbiguedad !== b.tieneAmbiguedad) return a.tieneAmbiguedad ? -1 : 1;
+    return (a.cumplimientoOficial ?? 0) - (b.cumplimientoOficial ?? 0);
+  });
 
-  const conDato = clientes.filter((c) => c.cumplimientoOficial !== null);
-  const cumplimientoGeneral = conDato.length
-    ? conDato.reduce((a, c) => a + (c.cumplimientoOficial ?? 0), 0) / conDato.length
-    : null;
+  // Cumplimiento general ponderado: comprado aplicado / sugerido total.
+  const sugeridoTotal = clientes.reduce((acc, c) => acc + c.sugerido, 0);
+  const compradoTotal = clientes.reduce((acc, c) => acc + Math.min(c.comprado, c.sugerido), 0);
+  const cumplimientoGeneral = sugeridoTotal > 0 ? Math.min((compradoTotal / sugeridoTotal) * 100, 100) : null;
+
+  const fechas = [
+    ...clientes.map((c) => c.fechaVentas).filter((v): v is string => Boolean(v)),
+    ...detalle.map((d) => d.fechaVentas).filter((v): v is string => Boolean(v)),
+  ].sort();
+  const fechaVentas = fechas.length ? fechas[fechas.length - 1] : null;
+
+  // Se conserva el objeto importacion porque varias pantallas existentes lo
+  // esperan. La fecha visible se sincroniza con la última fecha de ventas.
+  const importacion: Importacion = {
+    id: ultimaImportacion?.id ?? `automatico-${fechaVentas ?? "sin-fecha"}`,
+    created_at: fechaVentas ? `${fechaVentas}T12:00:00` : (ultimaImportacion?.created_at ?? new Date().toISOString()),
+    archivo_consolidado: ultimaImportacion?.archivo_consolidado ?? "Actualización automática",
+    archivo_detalle: ultimaImportacion?.archivo_detalle ?? "Power Automate / SCAU",
+    filas_consolidado: clientes.length,
+    filas_detalle: detalle.length,
+    estado: "procesada",
+    notas: "Datos calculados automáticamente desde vw_pedido_sugerido_clientes y vw_pedido_sugerido_actual.",
+  };
 
   return {
     importacion,
