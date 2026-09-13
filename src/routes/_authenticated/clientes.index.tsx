@@ -7,13 +7,15 @@ import { BarraCumplimiento, EstadoBadge, SinDatos } from "@/components/Indicador
 import { Input } from "@/components/ui/input";
 import { nf, nf1, traerCruce, type Semaforo } from "@/lib/datos";
 
+type FiltroEstado = Semaforo | "ambiguo" | "todos";
+
 export const Route = createFileRoute("/_authenticated/clientes/")({
   head: () => ({
     meta: [
       { title: "Clientes — Pedido Sugerido Tucumán" },
       {
         name: "description",
-        content: "Listado de clientes con cumplimiento oficial, sugerido, comprado y faltante en unidades y packs.",
+        content: "Listado de clientes con cumplimiento, sugerido, comprado y faltante en unidades y packs.",
       },
       { property: "og:title", content: "Clientes — Pedido Sugerido Tucumán" },
       { property: "og:description", content: "Cumplimiento, sugerido, comprado y faltante por cliente." },
@@ -25,7 +27,7 @@ export const Route = createFileRoute("/_authenticated/clientes/")({
 function Clientes() {
   const { data, isLoading } = useQuery({ queryKey: ["cruce"], queryFn: traerCruce });
   const [busqueda, setBusqueda] = useState("");
-  const [estado, setEstado] = useState<Semaforo | "todos">("todos");
+  const [estado, setEstado] = useState<FiltroEstado>("todos");
   const [ruta, setRuta] = useState("todas");
 
   const rutas = useMemo(
@@ -35,14 +37,22 @@ function Clientes() {
 
   const filtrados = useMemo(() => {
     const texto = busqueda.trim().toLowerCase();
-    return (data?.clientes ?? []).filter(
-      (c) =>
+    return (data?.clientes ?? []).filter((c) => {
+      const coincideEstado =
+        estado === "todos"
+          ? true
+          : estado === "ambiguo"
+            ? Boolean(c.tieneAmbiguedad)
+            : !c.tieneAmbiguedad && c.estado === estado;
+
+      return (
         (ruta === "todas" || c.ruta === ruta) &&
-        (estado === "todos" || c.estado === estado) &&
+        coincideEstado &&
         (!texto ||
           c.cliente.toLowerCase().includes(texto) ||
-          c.razon_social.toLowerCase().includes(texto)),
-    );
+          c.razon_social.toLowerCase().includes(texto))
+      );
+    });
   }, [data, busqueda, estado, ruta]);
 
   return (
@@ -52,7 +62,7 @@ function Clientes() {
           <Loader2 className="size-6 animate-spin text-primary" />
         </div>
       ) : !data ? (
-        <SinDatos mensaje="Todavía no hay datos importados." />
+        <SinDatos mensaje="Todavía no hay datos procesados." />
       ) : (
         <div className="space-y-4">
           <Input
@@ -62,7 +72,7 @@ function Clientes() {
             className="h-12"
           />
           <div className="flex flex-wrap gap-2">
-            {(["todos", "critico", "amarillo", "verde"] as const).map((e) => (
+            {(["todos", "critico", "amarillo", "verde", "ambiguo"] as const).map((e) => (
               <button
                 key={e}
                 onClick={() => setEstado(e)}
@@ -73,7 +83,15 @@ function Clientes() {
                     : "border-border bg-surface text-muted-foreground")
                 }
               >
-                {e === "todos" ? "Todos" : e === "critico" ? "Críticos" : e === "amarillo" ? "Por cerrar" : "Cumplidos"}
+                {e === "todos"
+                  ? "Todos"
+                  : e === "critico"
+                    ? "Críticos"
+                    : e === "amarillo"
+                      ? "Por cerrar"
+                      : e === "verde"
+                        ? "Cumplidos"
+                        : "Ambiguos"}
               </button>
             ))}
           </div>
@@ -113,7 +131,7 @@ function Clientes() {
                 </div>
 
                 <div className="mt-3 flex items-center justify-between gap-3">
-                  <EstadoBadge estado={c.estado} />
+                  <EstadoBadge estado={c.estado} ambiguo={c.tieneAmbiguedad} />
                   <span className="numero-tabular text-xl font-bold">
                     {c.cumplimientoOficial !== null ? `${nf1.format(c.cumplimientoOficial)}%` : "—"}
                   </span>
