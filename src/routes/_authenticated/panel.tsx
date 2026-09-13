@@ -60,7 +60,9 @@ export const Route = createFileRoute("/_authenticated/panel")({
 });
 
 function Panel() {
+  const { esAdmin } = useAuth();
   const { data, isLoading } = useQuery({ queryKey: ["cruce"], queryFn: traerCruce });
+
   const [ruta, setRuta] = useState("todas");
   const [estado, setEstado] = useState<Semaforo | "todos">("todos");
   const [busqueda, setBusqueda] = useState("");
