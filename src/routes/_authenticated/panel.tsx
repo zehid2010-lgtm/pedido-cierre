@@ -70,7 +70,10 @@ function Panel() {
   const [busqueda, setBusqueda] = useState("");
 
   const rutas = useMemo(
-    () => Array.from(new Set((data?.clientes ?? []).map((c) => c.ruta))).sort(),
+    () =>
+      Array.from(new Set((data?.clientes ?? []).map((c) => c.ruta))).sort((a, b) =>
+        a.localeCompare(b, "es", { numeric: true }),
+      ),
     [data],
   );
 
@@ -180,12 +183,32 @@ function Panel() {
             <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
               Filtros
             </p>
+
             <Input
               value={busqueda}
               onChange={(e) => setBusqueda(e.target.value)}
               placeholder="Buscar cliente o razón social"
               className="h-11"
             />
+
+            <div>
+              <label className="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                Ruta
+              </label>
+              <select
+                value={ruta}
+                onChange={(e) => setRuta(e.target.value)}
+                className="h-11 w-full rounded-xl border border-border bg-surface px-3 text-sm font-semibold text-foreground outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20"
+              >
+                <option value="todas">Todas las rutas</option>
+                {rutas.map((r) => (
+                  <option key={r} value={r}>
+                    Ruta {r}
+                  </option>
+                ))}
+              </select>
+            </div>
+
             <div className="flex flex-wrap gap-2">
               {(["todos", "critico", "amarillo", "verde", "ambiguo"] as const).map((e) => (
                 <button
@@ -207,22 +230,6 @@ function Panel() {
                         : e === "verde"
                           ? "Cumplidos"
                           : "Ambiguos"}
-                </button>
-              ))}
-            </div>
-            <div className="flex gap-2 overflow-x-auto pb-1">
-              {["todas", ...rutas].map((r) => (
-                <button
-                  key={r}
-                  onClick={() => setRuta(r)}
-                  className={
-                    "whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors " +
-                    (ruta === r
-                      ? "border-primary bg-primary/10 text-primary"
-                      : "border-border bg-surface text-muted-foreground")
-                  }
-                >
-                  {r === "todas" ? "Todas las rutas" : `Ruta ${r}`}
                 </button>
               ))}
             </div>
