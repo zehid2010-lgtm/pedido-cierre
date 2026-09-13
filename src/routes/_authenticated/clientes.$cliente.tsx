@@ -45,7 +45,7 @@ function DetalleCliente() {
           <Loader2 className="size-6 animate-spin text-primary" />
         </div>
       ) : !info ? (
-        <SinDatos mensaje="No se encontró el cliente en la última importación." />
+        <SinDatos mensaje="No se encontró el cliente en los datos actuales." />
       ) : (
         <div className="space-y-5">
           <div className="rounded-2xl border border-border bg-surface p-4 shadow-card">
@@ -56,12 +56,12 @@ function DetalleCliente() {
                 </p>
                 <p className="text-lg font-semibold">{info.razon_social}</p>
               </div>
-              <EstadoBadge estado={info.estado} />
+              <EstadoBadge estado={info.estado} ambiguo={info.tieneAmbiguedad} />
             </div>
             <p className="numero-tabular mt-3 text-4xl font-bold leading-none">
               {info.cumplimientoOficial !== null ? `${nf1.format(info.cumplimientoOficial)}%` : "—"}
             </p>
-            <p className="text-xs text-muted-foreground">Cumplimiento oficial consolidado</p>
+            <p className="text-xs text-muted-foreground">Cumplimiento calculado sobre sugerido y comprado</p>
             <div className="mt-3">
               <BarraCumplimiento valor={info.cumplimientoOficial} />
             </div>
@@ -82,7 +82,7 @@ function DetalleCliente() {
             <div className="border-b border-border px-4 py-3">
               <p className="text-sm font-bold uppercase tracking-wide">Detalle por MPR</p>
               <p className="text-xs text-muted-foreground">
-                Faltante = sugerencia − pedido, calculado MPR por MPR
+                Faltante = sugerencia − comprado, calculado MPR por MPR
               </p>
             </div>
             <div className="overflow-x-auto">
@@ -90,7 +90,7 @@ function DetalleCliente() {
                 <thead className="bg-surface-strong text-left text-[11px] uppercase tracking-wider text-muted-foreground">
                   <tr>
                     <th className="px-3 py-2">MPR</th>
-                    <th className="px-3 py-2 text-right">Pedido</th>
+                    <th className="px-3 py-2 text-right">Comprado</th>
                     <th className="px-3 py-2 text-right">Sugerencia</th>
                     <th className="px-3 py-2 text-right">Faltante</th>
                     <th className="px-3 py-2 text-right">U × pack</th>
