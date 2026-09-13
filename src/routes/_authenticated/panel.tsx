@@ -177,6 +177,23 @@ function Panel() {
           </Link>
         </div>
       )}
+
+      <div className="mt-5 grid grid-cols-2 gap-3">
+        {ACCESOS.filter((a) => !a.soloAdmin || esAdmin).map((a) => (
+          <Link
+            key={a.to}
+            to={a.to}
+            className="rounded-2xl border border-border bg-surface p-4 shadow-card transition-colors hover:border-primary/40"
+          >
+            <span className="flex size-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
+              <a.icon className="size-5" />
+            </span>
+            <p className="mt-2 text-sm font-bold">{a.label}</p>
+            <p className="text-xs text-muted-foreground">{a.detalle}</p>
+          </Link>
+        ))}
+      </div>
     </AppShell>
+
   );
 }
