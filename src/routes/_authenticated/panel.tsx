@@ -1,11 +1,48 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { AlertTriangle, CheckCircle2, Clock, Loader2, PackageSearch } from "lucide-react";
+import {
+  AlertTriangle,
+  Boxes,
+  CheckCircle2,
+  ClipboardList,
+  Clock,
+  Loader2,
+  PackageSearch,
+  Upload,
+  Users,
+} from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { BarraCumplimiento, SinDatos, Tarjeta } from "@/components/Indicadores";
 import { nf, nf1, traerCruce, type Semaforo } from "@/lib/datos";
+import { useAuth } from "@/lib/auth";
 import { Input } from "@/components/ui/input";
+
+const ACCESOS = [
+  { to: "/clientes", label: "Clientes", detalle: "Cumplimiento y faltante", icon: Users, soloAdmin: false },
+  {
+    to: "/pendientes",
+    label: "Pendientes Desarrollo",
+    detalle: "MPR con faltante > 0",
+    icon: ClipboardList,
+    soloAdmin: false,
+  },
+  {
+    to: "/equivalencias",
+    label: "Equivalencias MPR",
+    detalle: "Unidades por pack",
+    icon: Boxes,
+    soloAdmin: false,
+  },
+  {
+    to: "/importar",
+    label: "Importar Excel",
+    detalle: "Dos fuentes originales",
+    icon: Upload,
+    soloAdmin: true,
+  },
+] as const;
+
 
 export const Route = createFileRoute("/_authenticated/panel")({
   head: () => ({
