@@ -18,7 +18,7 @@ export function AppShell({
   children,
 }: {
   titulo: string;
-  subtitulo?: string;
+  subtitulo?: string | undefined;
   children: ReactNode;
 }) {
   const { nombre, rol, esAdmin, cerrarSesion } = useAuth();
