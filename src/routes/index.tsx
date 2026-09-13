@@ -48,7 +48,7 @@ const TARJETAS = [
   {
     to: "/importar",
     label: "Importación",
-    detalle: "Cargar los dos Excel originales",
+    detalle: "Carga manual de respaldo",
     icon: Upload,
   },
 ] as const;
@@ -64,8 +64,8 @@ function Inicio() {
           Pedido Sugerido - Desarrollo Tucumán
         </h1>
         <p className="mt-3 text-sm opacity-85">
-          Herramienta de campo para seguir el sugerido, lo comprado y el faltante por MPR. Versión
-          de demostración con datos de ejemplo.
+          Herramienta de campo para seguir el sugerido, lo comprado y el faltante por MPR.
+          Las ventas se actualizan automáticamente desde SCAU.
         </p>
 
         <div className="mt-8 space-y-3">
