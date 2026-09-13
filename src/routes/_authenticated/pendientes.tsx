@@ -49,6 +49,9 @@ function Pendientes() {
           .sort((a, b) => Number(b.faltante) - Number(a.faltante)),
       }))
       .sort((a, b) => {
+        if (a.cliente.tieneAmbiguedad !== b.cliente.tieneAmbiguedad) {
+          return a.cliente.tieneAmbiguedad ? -1 : 1;
+        }
         const prioridad = { critico: 0, amarillo: 1, verde: 2 } as const;
         const p = prioridad[a.cliente.estado] - prioridad[b.cliente.estado];
         return p !== 0 ? p : b.cliente.faltante - a.cliente.faltante;
@@ -62,7 +65,7 @@ function Pendientes() {
           <Loader2 className="size-6 animate-spin text-primary" />
         </div>
       ) : !data ? (
-        <SinDatos mensaje="Todavía no hay datos importados." />
+        <SinDatos mensaje="Todavía no hay datos procesados." />
       ) : (
         <div className="space-y-4">
           <Input
@@ -101,7 +104,7 @@ function Pendientes() {
                   </p>
                   <p className="truncate font-semibold">{cliente.razon_social}</p>
                   <div className="mt-1.5">
-                    <EstadoBadge estado={cliente.estado} />
+                    <EstadoBadge estado={cliente.estado} ambiguo={cliente.tieneAmbiguedad} />
                   </div>
                 </div>
                 <div className="shrink-0 text-right">
