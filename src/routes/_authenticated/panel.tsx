@@ -5,6 +5,7 @@ import {
   AlertTriangle,
   Boxes,
   CheckCircle2,
+  CircleHelp,
   ClipboardList,
   Clock,
   Loader2,
@@ -37,12 +38,13 @@ const ACCESOS = [
   {
     to: "/importar",
     label: "Importar Excel",
-    detalle: "Dos fuentes originales",
+    detalle: "Carga manual de respaldo",
     icon: Upload,
     soloAdmin: true,
   },
 ] as const;
 
+type FiltroEstado = Semaforo | "ambiguo" | "todos";
 
 export const Route = createFileRoute("/_authenticated/panel")({
   head: () => ({
@@ -50,7 +52,7 @@ export const Route = createFileRoute("/_authenticated/panel")({
       { title: "Panel general — Pedido Sugerido Tucumán" },
       {
         name: "description",
-        content: "Cumplimiento oficial consolidado, clientes críticos, por cerrar y cumplidos.",
+        content: "Cumplimiento, clientes críticos, por cerrar, cumplidos y ambiguos.",
       },
       { property: "og:title", content: "Panel general — Pedido Sugerido Tucumán" },
       { property: "og:description", content: "Cumplimiento consolidado del equipo en Tucumán." },
@@ -64,7 +66,7 @@ function Panel() {
   const { data, isLoading } = useQuery({ queryKey: ["cruce"], queryFn: traerCruce });
 
   const [ruta, setRuta] = useState("todas");
-  const [estado, setEstado] = useState<Semaforo | "todos">("todos");
+  const [estado, setEstado] = useState<FiltroEstado>("todos");
   const [busqueda, setBusqueda] = useState("");
 
   const rutas = useMemo(
@@ -74,57 +76,67 @@ function Panel() {
 
   const filtrados = useMemo(() => {
     const texto = busqueda.trim().toLowerCase();
-    return (data?.clientes ?? []).filter(
-      (c) =>
+    return (data?.clientes ?? []).filter((c) => {
+      const coincideEstado =
+        estado === "todos"
+          ? true
+          : estado === "ambiguo"
+            ? Boolean(c.tieneAmbiguedad)
+            : !c.tieneAmbiguedad && c.estado === estado;
+
+      return (
         (ruta === "todas" || c.ruta === ruta) &&
-        (estado === "todos" || c.estado === estado) &&
+        coincideEstado &&
         (!texto ||
           c.cliente.toLowerCase().includes(texto) ||
-          c.razon_social.toLowerCase().includes(texto)),
-    );
+          c.razon_social.toLowerCase().includes(texto))
+      );
+    });
   }, [data, ruta, estado, busqueda]);
 
   const resumen = useMemo(() => {
-    const criticos = filtrados.filter((c) => c.estado === "critico").length;
-    const porCerrar = filtrados.filter((c) => c.estado === "amarillo").length;
-    const cumplidos = filtrados.filter((c) => c.estado === "verde").length;
-    const conDato = filtrados.filter((c) => c.cumplimientoOficial !== null);
-    const promedio = conDato.length
-      ? conDato.reduce((a, c) => a + (c.cumplimientoOficial ?? 0), 0) / conDato.length
-      : null;
+    const ambiguos = filtrados.filter((c) => c.tieneAmbiguedad).length;
+    const criticos = filtrados.filter((c) => !c.tieneAmbiguedad && c.estado === "critico").length;
+    const porCerrar = filtrados.filter((c) => !c.tieneAmbiguedad && c.estado === "amarillo").length;
+    const cumplidos = filtrados.filter((c) => !c.tieneAmbiguedad && c.estado === "verde").length;
+
+    const sugerido = filtrados.reduce((a, c) => a + c.sugerido, 0);
+    const compradoAplicado = filtrados.reduce((a, c) => a + Math.min(c.comprado, c.sugerido), 0);
+    const cumplimiento = sugerido > 0 ? Math.min((compradoAplicado / sugerido) * 100, 100) : null;
+
     const faltante = filtrados.reduce((a, c) => a + c.faltante, 0);
-    return { criticos, porCerrar, cumplidos, promedio, faltante };
+    return { criticos, porCerrar, cumplidos, ambiguos, cumplimiento, faltante };
   }, [filtrados]);
+
+  const fechaActualizacion = data
+    ? new Date(data.importacion.created_at).toLocaleDateString("es-AR")
+    : null;
 
   return (
     <AppShell
       titulo="Panel general"
-      subtitulo={
-        data
-          ? `Importación del ${new Date(data.importacion.created_at).toLocaleDateString("es-AR")}`
-          : undefined
-      }
+      subtitulo={fechaActualizacion ? `Actualizado al ${fechaActualizacion}` : undefined}
     >
       {isLoading ? (
         <div className="flex justify-center py-16">
           <Loader2 className="size-6 animate-spin text-primary" />
         </div>
       ) : !data ? (
-        <SinDatos mensaje="Todavía no hay una importación procesada. El Administrador debe cargar los dos archivos Excel." />
+        <SinDatos mensaje="Todavía no hay datos procesados para mostrar." />
       ) : (
         <div className="space-y-5">
           <div className="rounded-2xl border border-border bg-surface p-5 shadow-card">
             <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
-              Cumplimiento general oficial
+              Cumplimiento general
             </p>
             <p className="numero-tabular mt-1 text-5xl font-bold leading-none">
-              {resumen.promedio !== null ? `${nf1.format(resumen.promedio)}%` : "—"}
+              {resumen.cumplimiento !== null ? `${nf1.format(resumen.cumplimiento)}%` : "—"}
             </p>
             <div className="mt-3">
-              <BarraCumplimiento valor={resumen.promedio} />
+              <BarraCumplimiento valor={resumen.cumplimiento} />
             </div>
             <p className="mt-2 text-xs text-muted-foreground">
-              {filtrados.length} clientes considerados · fuente consolidada oficial
+              {filtrados.length} clientes considerados · cálculo ponderado por sugerido
             </p>
           </div>
 
@@ -146,9 +158,15 @@ function Panel() {
             <Tarjeta
               titulo="Cumplidos"
               valor={resumen.cumplidos}
-              detalle="100% o más"
+              detalle="100%"
               tono="verde"
               icono={<CheckCircle2 className="size-4 text-exito" />}
+            />
+            <Tarjeta
+              titulo="Ambiguos"
+              valor={resumen.ambiguos}
+              detalle="Requieren revisión de cliente"
+              icono={<CircleHelp className="size-4 text-muted-foreground" />}
             />
             <Tarjeta
               titulo="Faltante total"
@@ -169,7 +187,7 @@ function Panel() {
               className="h-11"
             />
             <div className="flex flex-wrap gap-2">
-              {(["todos", "critico", "amarillo", "verde"] as const).map((e) => (
+              {(["todos", "critico", "amarillo", "verde", "ambiguo"] as const).map((e) => (
                 <button
                   key={e}
                   onClick={() => setEstado(e)}
@@ -186,7 +204,9 @@ function Panel() {
                       ? "Críticos"
                       : e === "amarillo"
                         ? "Por cerrar"
-                        : "Cumplidos"}
+                        : e === "verde"
+                          ? "Cumplidos"
+                          : "Ambiguos"}
                 </button>
               ))}
             </div>
@@ -233,6 +253,5 @@ function Panel() {
         ))}
       </div>
     </AppShell>
-
   );
 }
