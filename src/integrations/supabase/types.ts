@@ -61,6 +61,8 @@ export type Database = {
           mpr: string
           razon_social: string | null
           ruta: string | null
+          venta_co: number
+          venta_uc: number
         }
         Insert: {
           cantidad_unidades?: number
@@ -73,6 +75,8 @@ export type Database = {
           mpr: string
           razon_social?: string | null
           ruta?: string | null
+          venta_co?: number
+          venta_uc?: number
         }
         Update: {
           cantidad_unidades?: number
@@ -85,6 +89,8 @@ export type Database = {
           mpr?: string
           razon_social?: string | null
           ruta?: string | null
+          venta_co?: number
+          venta_uc?: number
         }
         Relationships: []
       }
@@ -195,6 +201,27 @@ export type Database = {
         }
         Relationships: []
       }
+      ingest_config: {
+        Row: {
+          created_at: string
+          id: boolean
+          secret_hash: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: boolean
+          secret_hash: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: boolean
+          secret_hash?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       origen_consolidado: {
         Row: {
           data: Json
@@ -297,7 +324,36 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      vw_pedido_sugerido_actual: {
+        Row: {
+          cliente: string | null
+          comprado: number | null
+          cumplimiento_pct: number | null
+          estado_cruce_cliente: string | null
+          faltante: number | null
+          fecha_ventas: string | null
+          mpr: string | null
+          razon_social: string | null
+          ruta: string | null
+          sugerencia: number | null
+        }
+        Relationships: []
+      }
+      vw_pedido_sugerido_clientes: {
+        Row: {
+          cliente: string | null
+          comprado: number | null
+          cumplimiento_pct: number | null
+          estado: string | null
+          faltante: number | null
+          fecha_ventas: string | null
+          razon_social: string | null
+          ruta: string | null
+          sugerido: number | null
+          tiene_ambiguedad: boolean | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       has_role: {
@@ -306,6 +362,14 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      ingest_compras_semanales: {
+        Args: { p_key: string; p_rows: Json }
+        Returns: Json
+      }
+      ingest_compras_semanales_lote: {
+        Args: { p_clave: string; p_fecha: string; p_payload: Json }
+        Returns: Json
       }
       is_admin: { Args: never; Returns: boolean }
     }
