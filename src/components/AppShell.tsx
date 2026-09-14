@@ -5,8 +5,8 @@ import {
   Boxes,
   ClipboardList,
   Clock3,
+  Lightbulb,
   LogOut,
-  Sparkles,
   Upload,
   Users,
 } from "lucide-react";
@@ -112,136 +112,150 @@ export function AppShell({
     .toUpperCase();
 
   return (
-    <div className="app-shell-bg min-h-screen overflow-x-hidden text-white">
-      <div className="relative z-10 flex min-h-screen gap-0 lg:p-3">
-        <aside className="glass-sidebar hidden w-[235px] shrink-0 overflow-hidden rounded-[22px] text-white lg:flex lg:flex-col">
-          <div className="flex items-center gap-3 border-b border-white/10 px-5 py-5">
-            <div className="flex size-12 items-center justify-center rounded-2xl border border-[#78ddff]/25 bg-gradient-to-br from-[#2e9cff] to-[#0f6bd8] shadow-[0_0_28px_rgba(36,157,255,.35)]">
-              <BarChart3 className="size-7" />
-            </div>
-            <div>
-              <p className="text-[16px] font-black leading-tight">Pedido</p>
-              <p className="text-[16px] font-black leading-tight">Sugerido</p>
-              <p className="mt-1 text-[10px] text-[#91bdd5]">Desarrollo Tucumán</p>
-            </div>
-          </div>
+    <div className="mock-page min-h-screen overflow-x-hidden text-white">
+      <div className="mock-scene">
+        <div className="mock-city-lights" />
+      </div>
 
-          <nav className="mt-4 space-y-1.5 px-3">
-            {items.map((item) => {
-              const activo =
-                pathname === item.to || pathname.startsWith(item.to + "/");
-              const Icono = item.icon;
-
-              return (
-                <Link
-                  key={item.to}
-                  to={item.to}
-                  className={cn(
-                    "flex items-center gap-3 rounded-2xl px-4 py-3.5 text-sm font-bold transition-all",
-                    activo
-                      ? "nav-active-glow text-white"
-                      : "text-[#c2d9e7] hover:bg-white/7 hover:text-white",
-                  )}
-                >
-                  <Icono className="size-5" />
-                  {item.label}
-                </Link>
-              );
-            })}
-          </nav>
-
-          <div className="mt-auto p-4">
-            <div className="rounded-2xl border border-[#66dfff]/20 bg-[#0b4770]/35 p-4 backdrop-blur">
-              <div className="mb-3 flex items-center gap-2 text-[#6ee8ff]">
-                <Sparkles className="size-4" />
-                <span className="text-[10px] font-black uppercase tracking-[0.12em]">
-                  Gestión comercial
-                </span>
+      <div className="relative z-10 mx-auto min-h-screen max-w-[1520px] p-2 lg:p-4">
+        <div className="mock-outer-frame flex min-h-[calc(100vh-32px)] overflow-hidden rounded-[26px]">
+          <aside className="mock-sidebar hidden w-[278px] shrink-0 text-white lg:flex lg:flex-col">
+            <div className="flex items-center gap-4 border-b border-white/10 px-6 py-6">
+              <div className="flex size-[54px] items-center justify-center rounded-2xl border border-[#7ceaff]/30 bg-gradient-to-br from-[#24a3ff] to-[#0f68dd] shadow-[0_0_24px_rgba(63,192,255,.38)]">
+                <BarChart3 className="size-7" />
               </div>
-              <p className="text-xs font-bold leading-relaxed text-white">
-                Una mejor planificación genera grandes resultados.
-              </p>
-            </div>
-            <p className="mt-4 text-[10px] text-white/35">v2.0.0</p>
-          </div>
-        </aside>
-
-        <div className="min-w-0 flex-1">
-          <header className="px-4 pb-4 pt-5 sm:px-6 lg:px-7 lg:pt-4">
-            <div className="flex flex-wrap items-start justify-between gap-5">
-              <div className="min-w-0">
-                <p className="text-[10px] font-black uppercase tracking-[0.22em] text-[#83d8ff]">
-                  Pedido Sugerido · Desarrollo Tucumán
+              <div>
+                <p className="text-[17px] font-black leading-tight">Pedido</p>
+                <p className="text-[17px] font-black leading-tight">Sugerido</p>
+                <p className="mt-1.5 text-[11px] text-[#9ec4d7]">
+                  Desarrollo Tucumán
                 </p>
-                <h1 className="mt-1 truncate text-4xl font-black leading-none text-white drop-shadow-sm">
-                  {titulo}
-                </h1>
-                {subtitulo ? (
-                  <p className="mt-2 text-[15px] text-[#d4eaf6]">{subtitulo}</p>
-                ) : null}
-              </div>
-
-              <div className="flex flex-wrap items-center gap-3">
-                <div className="glass-header-card hidden min-w-[200px] items-center gap-3 rounded-2xl px-4 py-3 sm:flex">
-                  <div className="flex size-9 items-center justify-center rounded-full border border-white/10 bg-white/8">
-                    <Clock3 className="size-4 text-[#8ce9ff]" />
-                  </div>
-                  <div>
-                    <p className="text-[9px] font-semibold text-[#8fbad1]">
-                      Última actualización
-                    </p>
-                    <p className="text-xs font-black text-white">{ultimaActualizacion}</p>
-                  </div>
-                </div>
-
-                <div className="glass-header-card flex items-center gap-3 rounded-2xl px-3 py-2.5">
-                  <div className="flex size-11 items-center justify-center rounded-full border border-[#6bdcff]/25 bg-gradient-to-br from-[#368dff] to-[#1c5bd6] text-sm font-black shadow-[0_0_20px_rgba(48,128,255,.28)]">
-                    {iniciales}
-                  </div>
-
-                  <div className="hidden min-w-[140px] sm:block">
-                    <p className="truncate text-sm font-black text-white">
-                      {nombre || "Usuario"}
-                    </p>
-                    <p className="text-[10px] capitalize text-[#9ac5db]">
-                      {rol ?? ""}
-                    </p>
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={() => void cerrarSesion()}
-                    className="flex size-10 items-center justify-center rounded-xl border border-white/10 bg-white/7 text-[#d7edf8] transition hover:bg-white/14 hover:text-white"
-                    aria-label="Cerrar sesión"
-                  >
-                    <LogOut className="size-5" />
-                  </button>
-                </div>
               </div>
             </div>
 
-            {referencia ? (
-              <div className="mt-3 flex flex-wrap gap-2 text-[10px] font-semibold lg:hidden">
-                <span className="rounded-full border border-white/10 bg-white/7 px-2.5 py-1">
-                  Período {referencia.periodo}
-                </span>
-                <span className="rounded-full border border-white/10 bg-white/7 px-2.5 py-1">
-                  Semana {referencia.semana}
-                </span>
-                <span className="rounded-full border border-white/10 bg-white/7 px-2.5 py-1">
-                  {referencia.desde} al {referencia.hasta}
-                </span>
-              </div>
-            ) : null}
-          </header>
+            <nav className="mt-5 space-y-2 px-3">
+              {items.map((item) => {
+                const activo =
+                  pathname === item.to || pathname.startsWith(item.to + "/");
+                const Icono = item.icon;
 
-          <main className="min-w-0 px-3 pb-24 sm:px-4 lg:px-6 lg:pb-6">
-            {children}
-          </main>
+                return (
+                  <Link
+                    key={item.to}
+                    to={item.to}
+                    className={cn(
+                      "flex items-center gap-4 rounded-[16px] px-4 py-4 text-[15px] font-bold transition",
+                      activo
+                        ? "mock-nav-active text-white"
+                        : "text-[#c5dce8] hover:bg-white/7 hover:text-white",
+                    )}
+                  >
+                    <Icono className="size-5" />
+                    {item.label}
+                  </Link>
+                );
+              })}
+            </nav>
+
+            <div className="mt-auto p-4">
+              <div className="mock-tip rounded-[20px] px-4 py-4">
+                <div className="flex items-center gap-3">
+                  <Lightbulb className="size-5 text-[#5cecff]" />
+                  <p className="text-xs font-semibold leading-relaxed text-[#d1e8f3]">
+                    Una mejor planificación genera grandes resultados.
+                  </p>
+                </div>
+              </div>
+              <p className="mt-5 px-2 text-[10px] text-white/40">v2.0.0</p>
+            </div>
+          </aside>
+
+          <div className="min-w-0 flex-1">
+            <header className="px-5 pb-4 pt-5 sm:px-7 lg:px-8 lg:pt-6">
+              <div className="flex flex-wrap items-start justify-between gap-5">
+                <div className="min-w-0">
+                  <p className="text-[10px] font-black uppercase tracking-[0.23em] text-[#92dcff]">
+                    Pedido Sugerido · Desarrollo Tucumán
+                  </p>
+                  <h1 className="mt-2 truncate text-[44px] font-black leading-none text-white">
+                    {titulo}
+                  </h1>
+                  {subtitulo ? (
+                    <p className="mt-2.5 text-[15px] text-[#d4e6ef]">
+                      {subtitulo}
+                    </p>
+                  ) : null}
+                </div>
+
+                <div className="flex flex-wrap items-center gap-3">
+                  <div className="mock-top-card hidden min-w-[225px] items-center gap-3 rounded-[18px] px-4 py-3 sm:flex">
+                    <div className="flex size-10 items-center justify-center rounded-full border border-white/10 bg-white/6">
+                      <Clock3 className="size-5 text-[#a9eaff]" />
+                    </div>
+                    <div>
+                      <p className="text-[9px] font-semibold text-[#9bbdce]">
+                        Última actualización
+                      </p>
+                      <p className="mt-0.5 text-[13px] font-black text-white">
+                        {ultimaActualizacion}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="mock-top-card flex min-w-[275px] items-center gap-3 rounded-[18px] px-3 py-3">
+                    <div className="flex size-12 items-center justify-center rounded-full border border-[#73dcff]/25 bg-gradient-to-br from-[#3f8fff] to-[#2458d5] text-sm font-black">
+                      {iniciales}
+                    </div>
+
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-black text-white">
+                        {nombre || "Usuario"}
+                      </p>
+                      <p className="mt-0.5 text-[10px] capitalize text-[#a0c4d7]">
+                        {rol ?? ""}
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => void cerrarSesion()}
+                      className="flex size-11 items-center justify-center rounded-[14px] border border-white/10 bg-white/7 text-[#daf0fa] transition hover:bg-white/14"
+                      aria-label="Cerrar sesión"
+                    >
+                      <LogOut className="size-5" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {referencia ? (
+                <div className="mt-3 flex flex-wrap gap-2 text-[10px] font-semibold lg:hidden">
+                  <span className="rounded-full border border-white/10 bg-white/7 px-2.5 py-1">
+                    Período {referencia.periodo}
+                  </span>
+                  <span className="rounded-full border border-white/10 bg-white/7 px-2.5 py-1">
+                    Semana {referencia.semana}
+                  </span>
+                  <span className="rounded-full border border-white/10 bg-white/7 px-2.5 py-1">
+                    {referencia.desde} al {referencia.hasta}
+                  </span>
+                </div>
+              ) : null}
+            </header>
+
+            <main className="min-w-0 px-4 pb-24 sm:px-6 lg:px-8 lg:pb-8">
+              {children}
+            </main>
+
+            <div className="hidden items-center justify-between px-8 pb-3 text-[9px] text-[#8eb7ca] lg:flex">
+              <span>⌁ Desarrollo Tucumán</span>
+              <span>Personas &nbsp; + &nbsp; Datos &nbsp; + &nbsp; Oportunidades</span>
+            </div>
+          </div>
         </div>
       </div>
 
-      <nav className="glass-mobile-nav fixed inset-x-2 bottom-2 z-40 rounded-2xl lg:hidden">
+      <nav className="mock-mobile-nav fixed inset-x-2 bottom-2 z-40 rounded-2xl lg:hidden">
         <div className="mx-auto flex max-w-5xl">
           {items.map((item) => {
             const activo =
@@ -254,15 +268,13 @@ export function AppShell({
                 to={item.to}
                 className={cn(
                   "flex flex-1 flex-col items-center gap-1 py-2.5 text-[10px] font-semibold transition-colors",
-                  activo ? "text-[#63e2ff]" : "text-[#8cabbf]",
+                  activo ? "text-[#65e8ff]" : "text-[#8eacbd]",
                 )}
               >
                 <span
                   className={cn(
-                    "flex size-9 items-center justify-center rounded-xl transition-all",
-                    activo
-                      ? "bg-[#178cff]/20 shadow-[0_0_16px_rgba(31,155,255,.22)]"
-                      : "bg-transparent",
+                    "flex size-9 items-center justify-center rounded-xl",
+                    activo ? "bg-[#168df3]/20" : "bg-transparent",
                   )}
                 >
                   <Icono className="size-5" />
