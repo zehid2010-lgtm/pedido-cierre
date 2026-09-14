@@ -177,14 +177,27 @@ function Clientes() {
                   </div>
 
                   <div className="ps-progress-wrap">
-                    <div
+                    <svg
                       className="ps-progress-ring"
-                      style={{
-                        background: `conic-gradient(#55eaff ${porcentaje}%, rgba(103, 216, 255, .16) 0)`,
-                      }}
+                      viewBox="0 0 40 40"
+                      aria-hidden="true"
                     >
-                      <div className="ps-progress-hole" />
-                    </div>
+                      <circle
+                        className="ps-progress-track"
+                        cx="20"
+                        cy="20"
+                        r="16"
+                      />
+                      <circle
+                        className="ps-progress-bar"
+                        cx="20"
+                        cy="20"
+                        r="16"
+                        pathLength="100"
+                        strokeDasharray="100"
+                        strokeDashoffset={100 - porcentaje}
+                      />
+                    </svg>
                     <strong className="ps-progress-value">
                       {nf1.format(cumplimiento)}%
                     </strong>
