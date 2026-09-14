@@ -628,15 +628,25 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 6px;
-    min-height: 28px;
-    border: 1px solid rgba(255,255,255,.07);
+    gap: 7px;
+    min-height: 34px;
+    border: 1px solid rgba(255,255,255,.09);
     border-radius: 9px;
-    background: rgba(255,255,255,.035);
+    background: rgba(255,255,255,.045);
     color: #fff;
-    font-size: 9px;
+    font-size: 10.5px;
   }
-  .ps-mobile-metric span { color: #8cabbc; }
+  .ps-mobile-metric span {
+    color: #9db9c8;
+    font-size: 10px;
+    font-weight: 700;
+  }
+  .ps-mobile-metric strong {
+    color: #fff;
+    font-size: 12.5px;
+    font-weight: 900;
+    font-variant-numeric: tabular-nums;
+  }
   .ps-mobile-metric strong.danger { color: #ff6a79; }
 
   .ps-mobile-nav {
@@ -700,7 +710,122 @@
     grid-row: 1 / span 3;
     align-self: center;
   }
+
+  .ps-mobile-metrics {
+    gap: 8px;
+    padding-top: 10px;
+  }
+
+  .ps-mobile-metric {
+    min-height: 38px;
+    gap: 6px;
+    padding: 0 4px;
+  }
+
+  .ps-mobile-metric span { font-size: 10.5px; }
+  .ps-mobile-metric strong { font-size: 13.5px; }
+
+  .mpr-table { min-width: 730px; }
+
+  .mpr-col-product {
+    width: 170px;
+    min-width: 170px;
+    max-width: 170px;
+  }
+
+  .mpr-col-number {
+    width: 105px;
+    min-width: 105px;
+  }
+
+  .mpr-col-packs {
+    width: 140px;
+    min-width: 140px;
+  }
+
+  .mpr-product-name { font-size: 12px; }
+  .mpr-product-description { font-size: 10px; }
+  .mpr-swipe-hint { display: block; }
 }
+
+
+  /* Detalle por MPR: descripción fija, resto desplazable */
+  .mpr-table-scroll {
+    width: 100%;
+    overflow-x: auto;
+    overflow-y: visible;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(100, 220, 255, .42) rgba(255,255,255,.04);
+  }
+
+  .mpr-table-scroll::-webkit-scrollbar { height: 7px; }
+  .mpr-table-scroll::-webkit-scrollbar-track { background: rgba(255,255,255,.04); }
+  .mpr-table-scroll::-webkit-scrollbar-thumb {
+    border-radius: 999px;
+    background: rgba(100, 220, 255, .42);
+  }
+
+  .mpr-table {
+    width: max-content;
+    min-width: 760px;
+    border-collapse: separate;
+    border-spacing: 0;
+  }
+
+  .mpr-col-product {
+    width: 220px;
+    min-width: 220px;
+    max-width: 220px;
+  }
+
+  .mpr-col-number {
+    width: 110px;
+    min-width: 110px;
+  }
+
+  .mpr-col-packs {
+    width: 145px;
+    min-width: 145px;
+  }
+
+  .mpr-sticky {
+    position: sticky;
+    left: 0;
+  }
+
+  .mpr-sticky-head {
+    z-index: 6;
+    background: #123b59;
+    box-shadow: 10px 0 18px -16px rgba(0,0,0,.95);
+  }
+
+  .mpr-sticky-cell {
+    z-index: 4;
+    background: #0d2c44;
+    box-shadow: 10px 0 18px -16px rgba(0,0,0,.95);
+  }
+
+  .mpr-product-name {
+    color: #fff;
+    line-height: 1.25;
+  }
+
+  .mpr-product-description {
+    margin-top: 3px;
+    line-height: 1.2;
+  }
+
+  .mpr-swipe-hint {
+    display: none;
+    margin: 0;
+    padding: 7px 10px 9px;
+    border-top: 1px solid rgba(255,255,255,.06);
+    color: #9ab8c8;
+    font-size: 10px;
+    line-height: 1.25;
+  }
 
 @utility numero-tabular {
   font-variant-numeric: tabular-nums;
