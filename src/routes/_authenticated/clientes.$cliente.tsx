@@ -85,16 +85,17 @@ function DetalleCliente() {
                 Faltante = sugerencia − comprado, calculado MPR por MPR
               </p>
             </div>
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[620px] text-sm">
+
+            <div className="mpr-table-scroll">
+              <table className="mpr-table text-sm">
                 <thead className="bg-surface-strong text-left text-[11px] uppercase tracking-wider text-muted-foreground">
                   <tr>
-                    <th className="px-3 py-2">MPR</th>
-                    <th className="px-3 py-2 text-right">Comprado</th>
-                    <th className="px-3 py-2 text-right">Sugerencia</th>
-                    <th className="px-3 py-2 text-right">Faltante</th>
-                    <th className="px-3 py-2 text-right">U × pack</th>
-                    <th className="px-3 py-2 text-right">Faltante packs</th>
+                    <th className="mpr-sticky mpr-sticky-head mpr-col-product px-3 py-2">MPR</th>
+                    <th className="mpr-col-number px-3 py-2 text-right">Comprado</th>
+                    <th className="mpr-col-number px-3 py-2 text-right">Sugerencia</th>
+                    <th className="mpr-col-number px-3 py-2 text-right">Faltante</th>
+                    <th className="mpr-col-number px-3 py-2 text-right">U × pack</th>
+                    <th className="mpr-col-packs px-3 py-2 text-right">Faltante packs</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -103,24 +104,24 @@ function DetalleCliente() {
                     const faltante = Number(f.faltante);
                     return (
                       <tr key={f.id} className="border-t border-border/60">
-                        <td className="px-3 py-2.5">
-                          <p className="font-semibold">{f.mpr}</p>
-                          <p className="text-xs text-muted-foreground">
+                        <td className="mpr-sticky mpr-sticky-cell mpr-col-product px-3 py-2.5">
+                          <p className="mpr-product-name font-semibold">{f.mpr}</p>
+                          <p className="mpr-product-description text-xs text-muted-foreground">
                             {f.descripcion ?? data?.descripcionesEquiv.get(f.mpr) ?? "—"}
                           </p>
                         </td>
-                        <td className="numero-tabular px-3 py-2.5 text-right">{nf.format(Number(f.pedido))}</td>
-                        <td className="numero-tabular px-3 py-2.5 text-right">{nf.format(Number(f.sugerencia))}</td>
+                        <td className="numero-tabular mpr-col-number px-3 py-2.5 text-right">{nf.format(Number(f.pedido))}</td>
+                        <td className="numero-tabular mpr-col-number px-3 py-2.5 text-right">{nf.format(Number(f.sugerencia))}</td>
                         <td
                           className={
-                            "numero-tabular px-3 py-2.5 text-right font-bold " +
+                            "numero-tabular mpr-col-number px-3 py-2.5 text-right font-bold " +
                             (faltante > 0 ? "text-critico" : "text-exito")
                           }
                         >
                           {nf.format(faltante)}
                         </td>
-                        <td className="numero-tabular px-3 py-2.5 text-right">{uxp ? nf.format(uxp) : "—"}</td>
-                        <td className="numero-tabular px-3 py-2.5 text-right">
+                        <td className="numero-tabular mpr-col-number px-3 py-2.5 text-right">{uxp ? nf.format(uxp) : "—"}</td>
+                        <td className="numero-tabular mpr-col-packs px-3 py-2.5 text-right">
                           {faltante <= 0 ? (
                             "—"
                           ) : uxp ? (
@@ -137,6 +138,10 @@ function DetalleCliente() {
                 </tbody>
               </table>
             </div>
+
+            <p className="mpr-swipe-hint">
+              Deslizá horizontalmente para ver Comprado, Sugerencia, Faltante y Packs.
+            </p>
           </div>
         </div>
       )}
