@@ -17,6 +17,7 @@ import { Route as AuthenticatedPanelRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedPendientesRouteImport } from './routes/_authenticated/pendientes'
 import { Route as AuthenticatedClientesIndexRouteImport } from './routes/_authenticated/clientes.index'
 import { Route as AuthenticatedClientesClienteRouteImport } from './routes/_authenticated/clientes.$cliente'
+import { Route as ApiPublicIngestComprasSemanalesRouteImport } from './routes/api/public/ingest-compras-semanales'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -60,6 +61,12 @@ const AuthenticatedClientesClienteRoute =
     path: '/clientes/$cliente',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const ApiPublicIngestComprasSemanalesRoute =
+  ApiPublicIngestComprasSemanalesRouteImport.update({
+    id: '/api/public/ingest-compras-semanales',
+    path: '/api/public/ingest-compras-semanales',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -68,6 +75,7 @@ export interface FileRoutesByFullPath {
   '/panel': typeof AuthenticatedPanelRoute
   '/pendientes': typeof AuthenticatedPendientesRoute
   '/clientes/$cliente': typeof AuthenticatedClientesClienteRoute
+  '/api/public/ingest-compras-semanales': typeof ApiPublicIngestComprasSemanalesRoute
   '/clientes/': typeof AuthenticatedClientesIndexRoute
 }
 export interface FileRoutesByTo {
@@ -77,6 +85,7 @@ export interface FileRoutesByTo {
   '/panel': typeof AuthenticatedPanelRoute
   '/pendientes': typeof AuthenticatedPendientesRoute
   '/clientes/$cliente': typeof AuthenticatedClientesClienteRoute
+  '/api/public/ingest-compras-semanales': typeof ApiPublicIngestComprasSemanalesRoute
   '/clientes': typeof AuthenticatedClientesIndexRoute
 }
 export interface FileRoutesById {
@@ -88,6 +97,7 @@ export interface FileRoutesById {
   '/_authenticated/panel': typeof AuthenticatedPanelRoute
   '/_authenticated/pendientes': typeof AuthenticatedPendientesRoute
   '/_authenticated/clientes/$cliente': typeof AuthenticatedClientesClienteRoute
+  '/api/public/ingest-compras-semanales': typeof ApiPublicIngestComprasSemanalesRoute
   '/_authenticated/clientes/': typeof AuthenticatedClientesIndexRoute
 }
 export interface FileRouteTypes {
@@ -99,6 +109,7 @@ export interface FileRouteTypes {
     | '/panel'
     | '/pendientes'
     | '/clientes/$cliente'
+    | '/api/public/ingest-compras-semanales'
     | '/clientes/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -108,6 +119,7 @@ export interface FileRouteTypes {
     | '/panel'
     | '/pendientes'
     | '/clientes/$cliente'
+    | '/api/public/ingest-compras-semanales'
     | '/clientes'
   id:
     | '__root__'
@@ -118,12 +130,14 @@ export interface FileRouteTypes {
     | '/_authenticated/panel'
     | '/_authenticated/pendientes'
     | '/_authenticated/clientes/$cliente'
+    | '/api/public/ingest-compras-semanales'
     | '/_authenticated/clientes/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  ApiPublicIngestComprasSemanalesRoute: typeof ApiPublicIngestComprasSemanalesRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -184,6 +198,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedClientesClienteRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/api/public/ingest-compras-semanales': {
+      id: '/api/public/ingest-compras-semanales'
+      path: '/api/public/ingest-compras-semanales'
+      fullPath: '/api/public/ingest-compras-semanales'
+      preLoaderRoute: typeof ApiPublicIngestComprasSemanalesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -211,6 +232,7 @@ const AuthenticatedRouteRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  ApiPublicIngestComprasSemanalesRoute: ApiPublicIngestComprasSemanalesRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
