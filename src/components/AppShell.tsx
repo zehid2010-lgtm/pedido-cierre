@@ -31,7 +31,7 @@ function referenciaSemana(fechaIso?: string | null): ReferenciaSemana | null {
     return null;
   }
 
-  const [anio, mes, diaMes] = partes;
+  const [anio, mes, diaMes] = partes as [number, number, number];
   const fecha = new Date(Date.UTC(anio, mes - 1, diaMes));
 
   // Semana ISO: lunes a domingo.

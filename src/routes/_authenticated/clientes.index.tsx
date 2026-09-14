@@ -1050,6 +1050,7 @@ function referenciaSemana(fechaIso?: string | null): ReferenciaSemana | null {
   if (!fechaIso) return null;
 
   const [anio, mes, diaMes] = fechaIso.slice(0, 10).split("-").map(Number);
+  if (anio === undefined || mes === undefined || diaMes === undefined) return null;
   if (![anio, mes, diaMes].every(Number.isFinite)) return null;
 
   const fecha = new Date(Date.UTC(anio, mes - 1, diaMes));
