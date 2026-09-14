@@ -7,7 +7,7 @@ export function EstadoBadge({
   ambiguo = false,
 }: {
   estado: Semaforo;
-  ambiguo?: boolean;
+  ambiguo?: boolean | undefined;
 }) {
   if (ambiguo) {
     return (
