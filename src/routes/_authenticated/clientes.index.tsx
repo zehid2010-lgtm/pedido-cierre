@@ -73,29 +73,28 @@ function Clientes() {
       subtitulo={`${filtrados.length} clientes · Seguimiento del cumplimiento`}
     >
       {isLoading ? (
-        <div className="glass-panel flex min-h-[420px] items-center justify-center rounded-[24px]">
-          <Loader2 className="size-8 animate-spin text-[#56dcff]" />
+        <div className="mock-glass flex min-h-[420px] items-center justify-center rounded-[26px]">
+          <Loader2 className="size-8 animate-spin text-[#58eaff]" />
         </div>
       ) : !data ? (
         <SinDatos mensaje="Todavía no hay datos procesados." />
       ) : (
         <div className="space-y-4">
-          <section className="glass-panel rounded-[22px] p-4 sm:p-5">
-            <div className="grid gap-4 lg:grid-cols-[0.78fr_1.35fr_auto] lg:items-end">
+          <section className="mock-glass rounded-[24px] px-5 py-5">
+            <div className="grid gap-4 lg:grid-cols-[0.82fr_1.42fr_auto] lg:items-end">
               <label className="block">
-                <span className="mb-2 block text-[10px] font-black uppercase tracking-[0.16em] text-[#9cc7df]">
+                <span className="mb-2 block text-[10px] font-black uppercase tracking-[0.18em] text-[#a8cadc]">
                   Ruta
                 </span>
-
                 <div className="relative">
-                  <MapPin className="pointer-events-none absolute left-4 top-1/2 size-5 -translate-y-1/2 text-[#66d8ff]" />
+                  <MapPin className="pointer-events-none absolute left-4 top-1/2 size-5 -translate-y-1/2 text-[#9bdcff]" />
                   <select
                     value={ruta}
                     onChange={(e) => {
                       setRuta(e.target.value);
                       setPagina(1);
                     }}
-                    className="glass-control h-12 w-full appearance-none rounded-xl pl-11 pr-10 text-sm font-black text-white outline-none transition focus:border-[#55dfff]"
+                    className="mock-control h-12 w-full appearance-none rounded-[14px] pl-11 pr-10 text-sm font-black text-white outline-none"
                   >
                     <option value="todas">Todas las rutas</option>
                     {rutas.map((r) => (
@@ -104,16 +103,16 @@ function Clientes() {
                       </option>
                     ))}
                   </select>
-                  <ChevronRight className="pointer-events-none absolute right-4 top-1/2 size-4 -translate-y-1/2 rotate-90 text-[#a9cce0]" />
+                  <ChevronRight className="pointer-events-none absolute right-4 top-1/2 size-4 -translate-y-1/2 rotate-90 text-[#add7ea]" />
                 </div>
               </label>
 
               <label className="block">
-                <span className="mb-2 block text-[10px] font-black uppercase tracking-[0.16em] text-[#9cc7df]">
+                <span className="mb-2 block text-[10px] font-black uppercase tracking-[0.18em] text-[#a8cadc]">
                   Buscar cliente
                 </span>
                 <div className="relative">
-                  <Search className="pointer-events-none absolute left-4 top-1/2 size-5 -translate-y-1/2 text-[#78b9db]" />
+                  <Search className="pointer-events-none absolute left-4 top-1/2 size-5 -translate-y-1/2 text-[#a6d5e9]" />
                   <input
                     value={busqueda}
                     onChange={(e) => {
@@ -121,16 +120,16 @@ function Clientes() {
                       setPagina(1);
                     }}
                     placeholder="Buscar por código, razón social o nombre..."
-                    className="glass-control h-12 w-full rounded-xl pl-11 pr-4 text-sm font-semibold text-white outline-none placeholder:text-[#7eabc4] focus:border-[#55dfff]"
+                    className="mock-control h-12 w-full rounded-[14px] pl-11 pr-4 text-sm font-semibold text-white outline-none placeholder:text-[#8aafc2]"
                   />
                 </div>
               </label>
 
-              <div className="pb-3 text-xs font-semibold text-[#a9c9dc] lg:whitespace-nowrap">
+              <p className="pb-3 text-[11px] font-semibold text-[#bdd4e0] lg:whitespace-nowrap">
                 {filtrados.length === 0
                   ? "Sin resultados"
                   : `Mostrando ${inicio + 1}–${fin} de ${filtrados.length} clientes`}
-              </div>
+              </p>
             </div>
           </section>
 
@@ -139,114 +138,103 @@ function Clientes() {
               const cumplimiento = c.cumplimientoOficial ?? 0;
               const porcentaje = Math.max(0, Math.min(100, cumplimiento));
 
-              const tonoEstado = c.tieneAmbiguedad
-                ? "#91a7b7"
-                : c.estado === "verde"
-                  ? "#42e6a4"
-                  : c.estado === "amarillo"
-                    ? "#ffc43d"
-                    : "#ff5d70";
+              const tono =
+                c.tieneAmbiguedad
+                  ? "#8da3b6"
+                  : c.estado === "verde"
+                    ? "#55e3ad"
+                    : c.estado === "amarillo"
+                      ? "#ffc33a"
+                      : "#ff6676";
 
-              const etiqueta = c.tieneAmbiguedad
-                ? "Ambiguo"
-                : c.estado === "verde"
-                  ? "Cumplido"
-                  : c.estado === "amarillo"
-                    ? "Por cerrar"
-                    : "Crítico";
-
-              const iniciales = inicialesCliente(c.razon_social);
+              const estado =
+                c.tieneAmbiguedad
+                  ? "Ambiguo"
+                  : c.estado === "verde"
+                    ? "Cumplido"
+                    : c.estado === "amarillo"
+                      ? "Por cerrar"
+                      : "Crítico";
 
               return (
                 <Link
                   key={c.cliente}
                   to="/clientes/$cliente"
                   params={{ cliente: c.cliente }}
-                  className="glass-row group block rounded-[18px] px-4 py-3.5 transition hover:-translate-y-[1px] hover:border-[#62dfff]/45 sm:px-5"
+                  className="mock-client-row group block rounded-[18px] px-5 py-4"
                 >
-                  <div className="grid items-center gap-3 xl:grid-cols-[58px_minmax(250px,1.5fr)_170px_110px_100px_92px_92px_92px_26px]">
-                    <div className="flex size-12 items-center justify-center rounded-full border border-[#72d9ff]/25 bg-gradient-to-br from-[#2b6ea8]/80 to-[#164975]/80 text-sm font-black text-white shadow-[inset_0_1px_0_rgba(255,255,255,.12)]">
-                      {iniciales}
+                  <div className="grid items-center gap-4 xl:grid-cols-[62px_minmax(280px,1.65fr)_170px_145px_90px_90px_90px_28px]">
+                    <div className="flex size-[52px] items-center justify-center rounded-full border border-[#78cfff]/25 bg-gradient-to-br from-[#2a6ca5]/80 to-[#15426f]/90] text-sm font-black text-white shadow-[inset_0_1px_0_rgba(255,255,255,.16)]">
+                      {inicialesCliente(c.razon_social)}
                     </div>
 
                     <div className="min-w-0">
                       <p className="truncate text-[15px] font-black text-white">
                         {c.razon_social}
                       </p>
-                      <p className="mt-0.5 text-[11px] font-semibold text-[#8bb7d0]">
+                      <p className="mt-0.5 text-[11px] font-semibold text-[#95b8ca]">
                         #{c.cliente} · Ruta {c.ruta}
                       </p>
                     </div>
 
-                    <div className="flex items-center">
+                    <div className="flex items-center gap-2">
                       <span
-                        className="inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-[11px] font-bold"
-                        style={{
-                          borderColor: `${tonoEstado}33`,
-                          color: c.estado === "amarillo" ? "#ffe09a" : tonoEstado,
-                          backgroundColor: `${tonoEstado}14`,
-                        }}
-                      >
-                        <span
-                          className="size-2.5 rounded-full"
-                          style={{ backgroundColor: tonoEstado }}
-                        />
-                        {etiqueta}
+                        className="size-2.5 rounded-full shadow-[0_0_10px_currentColor]"
+                        style={{ backgroundColor: tono, color: tono }}
+                      />
+                      <span className="text-[11px] font-bold text-white/90">
+                        {estado}
                       </span>
                     </div>
 
                     <div className="flex items-center gap-3">
                       <div
-                        className="relative flex size-12 items-center justify-center rounded-full"
+                        className="relative flex size-[50px] items-center justify-center rounded-full"
                         style={{
-                          background: `conic-gradient(#51e3ff ${porcentaje}%, rgba(122, 214, 255, 0.13) 0)`,
+                          background: `conic-gradient(#55eaff ${porcentaje}%, rgba(111, 216, 255, .17) 0)`,
                         }}
                       >
-                        <div className="absolute inset-[6px] rounded-full bg-[#103a5e]/95" />
-                        <span className="relative z-10 text-[10px] font-black text-white xl:hidden">
-                          {nf1.format(cumplimiento)}%
-                        </span>
+                        <div className="absolute inset-[6px] rounded-full bg-[#113957]" />
                       </div>
-                      <span className="numero-tabular hidden text-[15px] font-black text-white xl:block">
+
+                      <strong className="numero-tabular text-[17px] font-black text-white">
                         {nf1.format(cumplimiento)}%
-                      </span>
+                      </strong>
                     </div>
 
-                    <Metrica label="Sug." valor={Math.round(c.sugerido)} color="#ffffff" />
-                    <Metrica label="Comp." valor={Math.round(c.comprado)} color="#d9fff0" />
-                    <Metrica
+                    <Metric label="Sug." value={Math.round(c.sugerido)} />
+                    <Metric label="Comp." value={Math.round(c.comprado)} />
+                    <Metric
                       label="Falt."
-                      valor={Math.round(c.faltante)}
-                      color={c.faltante > 0 ? "#ff6979" : "#42e6a4"}
+                      value={Math.round(c.faltante)}
+                      danger={c.faltante > 0}
                     />
 
-                    <div className="hidden xl:block" />
-
-                    <ChevronRight className="size-5 text-[#8bd7f7] transition group-hover:translate-x-0.5 group-hover:text-white" />
+                    <ChevronRight className="size-5 text-[#8bdcff] transition group-hover:translate-x-0.5 group-hover:text-white" />
                   </div>
 
                   <div className="mt-3 grid grid-cols-3 gap-2 border-t border-white/7 pt-3 xl:hidden">
-                    <MetricaMovil label="Sug." valor={Math.round(c.sugerido)} />
-                    <MetricaMovil label="Comp." valor={Math.round(c.comprado)} />
-                    <MetricaMovil
+                    <MobileMetric label="Sug." value={Math.round(c.sugerido)} />
+                    <MobileMetric label="Comp." value={Math.round(c.comprado)} />
+                    <MobileMetric
                       label="Falt."
-                      valor={Math.round(c.faltante)}
-                      alerta={c.faltante > 0}
+                      value={Math.round(c.faltante)}
+                      danger={c.faltante > 0}
                     />
                   </div>
                 </Link>
               );
             })}
-
-            {filas.length === 0 ? (
-              <div className="glass-panel rounded-[22px] p-8">
-                <SinDatos mensaje="No hay clientes para esa ruta o búsqueda." />
-              </div>
-            ) : null}
           </section>
 
-          {filtrados.length > 0 ? (
-            <section className="glass-panel flex flex-wrap items-center justify-between gap-3 rounded-[18px] px-4 py-3">
+          {filas.length === 0 ? (
+            <div className="mock-glass rounded-[24px] p-8">
+              <SinDatos mensaje="No hay clientes para esa ruta o búsqueda." />
+            </div>
+          ) : null}
+
+          {filtrados.length > 0 && totalPaginas > 1 ? (
+            <div className="mock-glass flex flex-wrap items-center justify-between gap-3 rounded-[18px] px-4 py-3">
               <p className="text-xs font-semibold text-[#9abdd2]">
                 Mostrando {inicio + 1}–{fin} de {filtrados.length} clientes
               </p>
@@ -256,7 +244,7 @@ function Clientes() {
                   type="button"
                   disabled={paginaActual <= 1}
                   onClick={() => setPagina(Math.max(1, paginaActual - 1))}
-                  className="glass-control flex size-9 items-center justify-center rounded-lg text-[#b8d8e9] disabled:opacity-35"
+                  className="mock-control flex size-9 items-center justify-center rounded-lg text-[#c7e2f0] disabled:opacity-35"
                   aria-label="Página anterior"
                 >
                   <ChevronLeft className="size-4" />
@@ -264,7 +252,7 @@ function Clientes() {
 
                 {paginasVisibles(paginaActual, totalPaginas).map((p, index) =>
                   p === "..." ? (
-                    <span key={`sep-${index}`} className="px-1 text-xs text-[#789db5]">
+                    <span key={`sep-${index}`} className="px-1 text-xs text-[#86aabd]">
                       …
                     </span>
                   ) : (
@@ -273,10 +261,10 @@ function Clientes() {
                       type="button"
                       onClick={() => setPagina(p)}
                       className={
-                        "flex size-9 items-center justify-center rounded-lg border text-xs font-black transition " +
+                        "flex size-9 items-center justify-center rounded-lg border text-xs font-black " +
                         (p === paginaActual
-                          ? "border-[#54dfff] bg-[#1f8ef1] text-white shadow-[0_0_18px_rgba(46,173,255,.35)]"
-                          : "border-white/10 bg-white/5 text-[#b9d4e3] hover:bg-white/10")
+                          ? "border-[#6be7ff] bg-[#148cf1] text-white shadow-[0_0_18px_rgba(60,190,255,.28)]"
+                          : "border-white/10 bg-white/5 text-[#bad5e3]")
                       }
                     >
                       {p}
@@ -290,13 +278,13 @@ function Clientes() {
                   onClick={() =>
                     setPagina(Math.min(totalPaginas, paginaActual + 1))
                   }
-                  className="glass-control flex size-9 items-center justify-center rounded-lg text-[#b8d8e9] disabled:opacity-35"
+                  className="mock-control flex size-9 items-center justify-center rounded-lg text-[#c7e2f0] disabled:opacity-35"
                   aria-label="Página siguiente"
                 >
                   <ChevronRight className="size-4" />
                 </button>
               </div>
-            </section>
+            </div>
           ) : null}
         </div>
       )}
@@ -314,44 +302,49 @@ function inicialesCliente(nombre: string) {
     .toUpperCase();
 }
 
-function Metrica({
+function Metric({
   label,
-  valor,
-  color,
+  value,
+  danger = false,
 }: {
   label: string;
-  valor: number;
-  color: string;
+  value: number;
+  danger?: boolean;
 }) {
   return (
-    <div className="hidden border-l border-white/10 pl-4 text-center xl:block">
-      <p className="text-[10px] font-semibold text-[#89abc0]">{label}</p>
-      <p className="numero-tabular mt-0.5 text-[12px] font-black" style={{ color }}>
-        {nf.format(valor)}
+    <div className="hidden border-l border-white/10 pl-4 xl:block">
+      <p className="text-[10px] font-semibold text-[#8faec0]">{label}</p>
+      <p
+        className={
+          "numero-tabular mt-0.5 text-[12px] font-black " +
+          (danger ? "text-[#ff6a78]" : "text-white")
+        }
+      >
+        {nf.format(value)}
       </p>
     </div>
   );
 }
 
-function MetricaMovil({
+function MobileMetric({
   label,
-  valor,
-  alerta = false,
+  value,
+  danger = false,
 }: {
   label: string;
-  valor: number;
-  alerta?: boolean;
+  value: number;
+  danger?: boolean;
 }) {
   return (
     <div className="rounded-xl border border-white/7 bg-white/[0.035] px-2 py-2 text-center">
-      <p className="text-[9px] font-semibold text-[#7fa5bc]">{label}</p>
+      <p className="text-[9px] font-semibold text-[#89aabd]">{label}</p>
       <p
         className={
           "numero-tabular text-[12px] font-black " +
-          (alerta ? "text-[#ff6979]" : "text-white")
+          (danger ? "text-[#ff6a78]" : "text-white")
         }
       >
-        {nf.format(valor)}
+        {nf.format(value)}
       </p>
     </div>
   );
