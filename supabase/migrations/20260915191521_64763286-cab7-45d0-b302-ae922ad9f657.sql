@@ -1,0 +1,1 @@
+ALTER VIEW public.vw_pedido_sugerido_actual SET (security_invoker = true);
