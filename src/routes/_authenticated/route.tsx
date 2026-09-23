@@ -192,7 +192,8 @@ function Acceso() {
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Contraseña"
               required
-              autoComplete="current-password"
+              autoComplete={modo === "crear" ? "new-password" : "current-password"}
+              minLength={6}
             />
           </div>
 
@@ -210,7 +211,7 @@ function Acceso() {
             {enviando ? (
               <Loader2 className="size-5 animate-spin" />
             ) : (
-              "Ingresar"
+              modo === "crear" ? "Crear cuenta" : "Ingresar"
             )}
           </button>
         </form>
