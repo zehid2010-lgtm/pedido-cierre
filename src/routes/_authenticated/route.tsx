@@ -29,28 +29,83 @@ function LayoutProtegido() {
   return <Outlet />;
 }
 
+function traducirError(msg: string): string {
+  const m = msg.toLowerCase();
+  if (m.includes("already registered") || m.includes("already exists"))
+    return "Ese correo ya tiene una cuenta. Usá la pestaña Ingresar.";
+  if (m.includes("password") && (m.includes("least") || m.includes("short")))
+    return "La contraseña debe tener al menos 6 caracteres.";
+  if (m.includes("weak") || m.includes("pwned") || m.includes("leaked"))
+    return "La contraseña es demasiado débil o conocida. Elegí otra más segura.";
+  if (m.includes("invalid") && m.includes("email"))
+    return "El correo no es válido.";
+  if (m.includes("email not confirmed"))
+    return "Tenés que confirmar tu correo antes de ingresar. Revisá tu bandeja.";
+  if (m.includes("rate limit"))
+    return "Demasiados intentos. Esperá unos minutos y probá de nuevo.";
+  if (m.includes("failed to fetch") || m.includes("network"))
+    return "No se pudo conectar con el servidor. Verificá tu conexión o usá la dirección oficial de la app.";
+  if (m.includes("signups not allowed") || m.includes("signup is disabled"))
+    return "El registro de cuentas está deshabilitado.";
+  return msg;
+}
+
 function Acceso() {
+  const [modo, setModo] = useState<"ingresar" | "crear">("ingresar");
+  const [nombre, setNombre] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [enviando, setEnviando] = useState(false);
   const [error, setError] = useState("");
+  const [aviso, setAviso] = useState("");
 
   async function ingresar(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
 
     setError("");
+    setAviso("");
     setEnviando(true);
 
-    const { error } = await supabase.auth.signInWithPassword({
-      email: email.trim(),
-      password,
-    });
-
-    if (error) {
-      setError("Correo o contraseña incorrectos.");
+    try {
+      if (modo === "ingresar") {
+        const { error } = await supabase.auth.signInWithPassword({
+          email: email.trim(),
+          password,
+        });
+        if (error) {
+          setError(
+            error.message.toLowerCase().includes("invalid login")
+              ? "Correo o contraseña incorrectos."
+              : traducirError(error.message),
+          );
+        }
+      } else {
+        if (!nombre.trim()) {
+          setError("Ingresá tu nombre y apellido.");
+          return;
+        }
+        const { data, error } = await supabase.auth.signUp({
+          email: email.trim(),
+          password,
+          options: {
+            emailRedirectTo: window.location.origin,
+            data: { nombre: nombre.trim() },
+          },
+        });
+        if (error) {
+          setError(traducirError(error.message));
+        } else if (!data.session) {
+          setAviso(
+            "Cuenta creada. Revisá tu correo y confirmá el enlace para poder ingresar.",
+          );
+          setModo("ingresar");
+        }
+      }
+    } catch (err) {
+      setError(traducirError(err instanceof Error ? err.message : String(err)));
+    } finally {
+      setEnviando(false);
     }
-
-    setEnviando(false);
   }
 
   return (
@@ -68,7 +123,49 @@ function Acceso() {
           Desarrollo Tucumán
         </p>
 
-        <form onSubmit={ingresar} className="mt-6 space-y-4">
+        <div className="mt-6 grid grid-cols-2 gap-1 rounded-xl bg-muted p-1">
+          {(["ingresar", "crear"] as const).map((m) => (
+            <button
+              key={m}
+              type="button"
+              onClick={() => {
+                setModo(m);
+                setError("");
+              }}
+              className={
+                "h-9 rounded-lg text-sm font-bold " +
+                (modo === m
+                  ? "bg-surface text-foreground shadow-sm"
+                  : "text-muted-foreground")
+              }
+            >
+              {m === "ingresar" ? "Ingresar" : "Crear cuenta"}
+            </button>
+          ))}
+        </div>
+
+        {aviso ? (
+          <div className="mt-4 rounded-xl bg-primary/10 px-3 py-2 text-sm font-semibold text-primary">
+            {aviso}
+          </div>
+        ) : null}
+
+        <form onSubmit={ingresar} className="mt-4 space-y-4">
+          {modo === "crear" ? (
+            <div>
+              <label className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-muted-foreground">
+                Nombre y apellido
+              </label>
+              <Input
+                value={nombre}
+                onChange={(e) => setNombre(e.target.value)}
+                placeholder="Nombre Apellido"
+                required
+                autoComplete="name"
+              />
+            </div>
+          ) : null}
+
           <div>
             <label className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-muted-foreground">
               Correo
