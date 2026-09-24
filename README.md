@@ -96,3 +96,8 @@ cd <repository-name>
 npm i
 npm run dev
 ```
+
+
+## Vercel migration
+
+This branch is prepared for a Vercel preview deployment while the existing Lovable deployment remains untouched.
