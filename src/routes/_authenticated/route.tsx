@@ -88,7 +88,7 @@ function Acceso() {
           email: email.trim(),
           password,
           options: {
-            emailRedirectTo: window.location.origin,
+            emailRedirectTo: new URL(import.meta.env.BASE_URL, window.location.origin).toString(),
             data: { nombre: nombre.trim() },
           },
         });
