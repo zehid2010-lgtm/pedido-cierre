@@ -14,6 +14,7 @@ import { SinDatos } from "@/components/Indicadores";
 import { nf, nf1, traerCruce } from "@/lib/datos";
 
 const FILAS_POR_PAGINA = 50;
+const CLAVE_RUTA_CLIENTES = "pedido-sugerido:ruta-clientes";
 
 export const Route = createFileRoute("/_authenticated/clientes/")({
   head: () => ({
@@ -35,7 +36,10 @@ function Clientes() {
     queryFn: traerCruce,
   });
 
-  const [ruta, setRuta] = useState("todas");
+  const [ruta, setRuta] = useState(() => {
+    if (typeof window === "undefined") return "todas";
+    return window.sessionStorage.getItem(CLAVE_RUTA_CLIENTES) || "todas";
+  });
   const [busqueda, setBusqueda] = useState("");
   const [pagina, setPagina] = useState(1);
 
@@ -88,8 +92,12 @@ function Clientes() {
                 <select
                   value={ruta}
                   onChange={(e) => {
-                    setRuta(e.target.value);
+                    const nuevaRuta = e.target.value;
+                    setRuta(nuevaRuta);
                     setPagina(1);
+                    if (typeof window !== "undefined") {
+                      window.sessionStorage.setItem(CLAVE_RUTA_CLIENTES, nuevaRuta);
+                    }
                   }}
                   className="ps-control ps-select"
                 >
