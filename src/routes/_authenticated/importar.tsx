@@ -66,7 +66,21 @@ type ConsolidadoProcesado = {
 };
 
 function buscarIdCliente(columnas: string[]): string | null {
-  return buscarColumna(columnas, COLS_ID_CLIENTE) ?? buscarColumna(columnas, ["cliente"]);
+  const directa = buscarColumna(columnas, COLS_ID_CLIENTE);
+  if (directa) return directa;
+
+  const porOut = columnas.find((columna) => {
+    const n = columna
+      .toString()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "");
+    return n === "outcli" || n === "outnum" || (n.startsWith("out") && (n.includes("cli") || n.includes("num")));
+  });
+  if (porOut) return porOut;
+
+  return buscarColumna(columnas, ["cliente"]);
 }
 
 function buscarRazonSocial(columnas: string[], columnaId: string | null): string | null {
