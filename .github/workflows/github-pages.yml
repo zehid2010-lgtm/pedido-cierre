@@ -33,9 +33,6 @@ jobs:
       - name: Build static SPA
         env:
           GITHUB_PAGES: "true"
-          VITE_SUPABASE_PROJECT_ID: rsownxoygcdhnvlommfk
-          VITE_SUPABASE_URL: https://rsownxoygcdhnvlommfk.supabase.co
-          VITE_SUPABASE_PUBLISHABLE_KEY: sb_publishable_yKsBhm3IBDC5Tejw_1_LSQ_HcFb9prm
         run: bun run build
 
       - name: Configure GitHub Pages
