@@ -101,3 +101,8 @@ npm run dev
 ## Vercel migration
 
 This branch is prepared for a Vercel preview deployment while the existing Lovable deployment remains untouched.
+
+
+## GitHub-only mode
+
+La aplicación puede ejecutarse en GitHub Pages sin depender de un backend permanente. Los datos operativos se guardan en IndexedDB dentro del navegador y pueden exportarse/restaurarse como un respaldo JSON privado. La primera carga puede migrar una copia local desde Supabase mientras ese proyecto siga disponible.
