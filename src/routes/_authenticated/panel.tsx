@@ -105,11 +105,25 @@ function Panel() {
 
     const sugerido = filtrados.reduce((a, c) => a + c.sugerido, 0);
     const compradoAplicado = filtrados.reduce((a, c) => a + Math.min(c.comprado, c.sugerido), 0);
-    const cumplimiento = sugerido > 0 ? Math.min((compradoAplicado / sugerido) * 100, 100) : null;
+    const cumplimientoCalculado =
+      sugerido > 0 ? Math.min((compradoAplicado / sugerido) * 100, 100) : null;
+
+    const sinFiltrosDeSubconjunto =
+      ruta === "todas" && estado === "todos" && busqueda.trim() === "";
+
+    const cumplimiento =
+      sinFiltrosDeSubconjunto && data?.resultadoJefe !== null && data?.resultadoJefe !== undefined
+        ? data.resultadoJefe
+        : ruta !== "todas" &&
+            estado === "todos" &&
+            busqueda.trim() === "" &&
+            data?.resultadosRuta?.[ruta] !== undefined
+          ? data.resultadosRuta[ruta]
+          : cumplimientoCalculado;
 
     const faltante = filtrados.reduce((a, c) => a + c.faltante, 0);
     return { criticos, porCerrar, cumplidos, ambiguos, cumplimiento, faltante };
-  }, [filtrados]);
+  }, [filtrados, data, ruta, estado, busqueda]);
 
   const fechaActualizacion = data
     ? new Date(data.importacion.created_at).toLocaleDateString("es-AR")
@@ -139,7 +153,11 @@ function Panel() {
               <BarraCumplimiento valor={resumen.cumplimiento} />
             </div>
             <p className="mt-2 text-xs text-muted-foreground">
-              {filtrados.length} clientes considerados · cálculo ponderado por sugerido
+              {filtrados.length} clientes considerados · {ruta === "todas" && estado === "todos" && !busqueda.trim()
+                ? "resultado oficial Ricardo Zehid"
+                : ruta !== "todas" && estado === "todos" && !busqueda.trim()
+                  ? "resultado oficial de la ruta"
+                  : "cálculo del subconjunto filtrado"}
             </p>
           </div>
 
