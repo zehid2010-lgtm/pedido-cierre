@@ -65,6 +65,20 @@ function Clientes() {
     });
   }, [data, ruta, busqueda]);
 
+  const cumplimientoRuta = useMemo(() => {
+    if (ruta === "todas") return null;
+
+    const clientesRuta = (data?.clientes ?? []).filter((c) => c.ruta === ruta);
+    const sugeridoTotal = clientesRuta.reduce((acc, c) => acc + Number(c.sugerido || 0), 0);
+    const compradoTotal = clientesRuta.reduce(
+      (acc, c) => acc + Math.min(Number(c.comprado || 0), Number(c.sugerido || 0)),
+      0,
+    );
+
+    if (sugeridoTotal <= 0) return 0;
+    return Math.min((compradoTotal / sugeridoTotal) * 100, 100);
+  }, [data, ruta]);
+
   const totalPaginas = Math.max(1, Math.ceil(filtrados.length / FILAS_POR_PAGINA));
   const paginaActual = Math.min(pagina, totalPaginas);
   const inicio = (paginaActual - 1) * FILAS_POR_PAGINA;
@@ -133,6 +147,20 @@ function Clientes() {
                 ? "Sin resultados"
                 : `Mostrando ${inicio + 1}–${fin} de ${filtrados.length} clientes`}
             </p>
+
+            {ruta !== "todas" && cumplimientoRuta !== null ? (
+              <div className="rounded-xl border border-primary/30 bg-primary/10 px-4 py-3">
+                <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                  Ruta {ruta} · Consolidado
+                </p>
+                <p className="numero-tabular mt-1 text-3xl font-bold text-foreground">
+                  {nf1.format(cumplimientoRuta)}%
+                </p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Calculado sobre sugerido y comprado de toda la ruta.
+                </p>
+              </div>
+            ) : null}
           </section>
 
           <section className="ps-client-list">
