@@ -354,7 +354,7 @@ function Importar() {
     >
       <div className="space-y-4">
         <div className="rounded-2xl border border-primary/30 bg-primary/10 p-4 text-sm">
-          <p className="font-bold">Modo GitHub sin Supabase</p>
+          <p className="font-bold">Modo GitHub sin Supabase · Importador v20</p>
           <p className="mt-1 text-muted-foreground">
             Los archivos se procesan dentro de tu navegador. No se publican en GitHub ni se envían a una base externa.
           </p>
