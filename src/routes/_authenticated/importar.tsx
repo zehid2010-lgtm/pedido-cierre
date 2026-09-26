@@ -99,6 +99,26 @@ function normalizarRuta(valor: unknown): string {
   return String(Number(soloDigitos));
 }
 
+function normalizarClienteId(valor: unknown): string {
+  const texto = String(valor ?? "").trim();
+
+  // En Fuente 1, Out-CLI puede venir como "3199830 - Singh Mandeep".
+  // Tomamos el número inicial para poder cruzarlo con Outnum de Fuente 2.
+  const inicial = texto.match(/^\s*(\d{5,})\b/);
+  if (inicial?.[1]) return String(Number(inicial[1]));
+
+  const soloDigitos = texto.replace(/\D/g, "");
+  if (soloDigitos) return String(Number(soloDigitos));
+
+  return texto;
+}
+
+function extraerRazonDesdeOutCli(valor: unknown): string | null {
+  const texto = String(valor ?? "").trim();
+  const match = texto.match(/^\s*\d{5,}\s*[-–—]\s*(.+?)\s*$/);
+  return match?.[1]?.trim() || null;
+}
+
 function esRutaDesarrolloTucuman(valor: unknown): boolean {
   const ruta = Number(normalizarRuta(valor));
   return Number.isFinite(ruta) && ruta >= 3140 && ruta <= 3145;
@@ -247,8 +267,10 @@ function Importar() {
           return !c.ruta || esRutaDesarrolloTucuman(f[c.ruta]);
         })
         .map((f) => ({
-          cliente: String(f[c.cliente!] ?? "").trim(),
-          razon_social: c.razon ? (f[c.razon] ?? null)?.toString() ?? null : null,
+          cliente: normalizarClienteId(f[c.cliente!]),
+          razon_social: c.razon
+            ? (f[c.razon] ?? null)?.toString() ?? null
+            : extraerRazonDesdeOutCli(f[c.cliente!]),
           ruta: c.ruta ? normalizarRuta(f[c.ruta]) : null,
           cumplimiento: c.cumpl ? aPorcentaje(f[c.cumpl]) : null,
         }))
@@ -264,7 +286,7 @@ function Importar() {
           const sugerencia = Math.max(aNumero(f[d.sug!]), 0);
           return {
             id: i + 1,
-            cliente: String(f[d.cliente!] ?? "").trim(),
+            cliente: normalizarClienteId(f[d.cliente!]),
             razon_social: d.razon ? (f[d.razon] ?? null)?.toString() ?? null : null,
             ruta: d.ruta ? normalizarRuta(f[d.ruta]) : null,
             mpr: String(f[d.mpr!] ?? "").trim(),
@@ -387,7 +409,7 @@ function Importar() {
     >
       <div className="space-y-4">
         <div className="rounded-2xl border border-primary/30 bg-primary/10 p-4 text-sm">
-          <p className="font-bold">Modo GitHub sin Supabase · Importador v21</p>
+          <p className="font-bold">Modo GitHub sin Supabase · Importador v22</p>
           <p className="mt-1 text-muted-foreground">
             Los archivos se procesan dentro de tu navegador. No se publican en GitHub ni se envían a una base externa.
           </p>
