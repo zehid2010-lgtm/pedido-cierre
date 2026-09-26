@@ -3,19 +3,23 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { AlertCircle, CheckCircle2, FileSpreadsheet, Loader2, Upload } from "lucide-react";
 import { toast } from "sonner";
+
 import { AppShell } from "@/components/AppShell";
-import { SinDatos } from "@/components/Indicadores";
 import { Button } from "@/components/ui/button";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/lib/auth";
-import { traerImportaciones } from "@/lib/datos";
+import {
+  guardarImportacionLocal,
+  semaforo,
+  traerImportaciones,
+  type FilaCliente,
+  type FilaDetalle,
+  type Importacion,
+} from "@/lib/datos";
 import {
   ErrorEstructura,
   aNumero,
   aPorcentaje,
   buscarColumna,
   leerHojaExport,
-  type FilaOriginal,
 } from "@/lib/excel";
 
 export const Route = createFileRoute("/_authenticated/importar")({
@@ -25,12 +29,7 @@ export const Route = createFileRoute("/_authenticated/importar")({
       {
         name: "description",
         content:
-          "Carga de los dos archivos Excel originales (consolidado por cliente y detalle por MPR) con validación de la hoja Export.",
-      },
-      { property: "og:title", content: "Importar Excel — Pedido Sugerido Tucumán" },
-      {
-        property: "og:description",
-        content: "Carga y validación de las dos fuentes originales del pedido sugerido.",
+          "Carga local de los dos archivos Excel originales, sin enviar información a servidores externos.",
       },
     ],
   }),
@@ -48,8 +47,14 @@ const COLS_SUG = ["sugerencia", "sugerido", "sugerencia unidades"];
 
 type Paso = { texto: string; ok: boolean };
 
+type ConsolidadoProcesado = {
+  cliente: string;
+  razon_social: string | null;
+  ruta: string | null;
+  cumplimiento: number | null;
+};
+
 function Importar() {
-  const { esAdmin, user } = useAuth();
   const qc = useQueryClient();
   const [consolidado, setConsolidado] = useState<File | null>(null);
   const [detalle, setDetalle] = useState<File | null>(null);
@@ -57,39 +62,28 @@ function Importar() {
   const [errores, setErrores] = useState<string[]>([]);
   const [pasos, setPasos] = useState<Paso[]>([]);
 
-  const { data: historial } = useQuery({ queryKey: ["importaciones"], queryFn: traerImportaciones });
+  const { data: historial } = useQuery({
+    queryKey: ["importaciones"],
+    queryFn: traerImportaciones,
+  });
 
-  if (!esAdmin) {
-    return (
-      <AppShell titulo="Importar" subtitulo="Solo Administrador">
-        <SinDatos mensaje="Tu perfil es Desarrollo (solo lectura). La carga de los archivos Excel la realiza un Administrador." />
-      </AppShell>
-    );
-  }
-
-  const agregarPaso = (texto: string, ok = true) => setPasos((p) => [...p, { texto, ok }]);
-
-  const insertarPorLotes = async <T,>(tabla: string, filas: T[]) => {
-    const lote = 500;
-    for (let i = 0; i < filas.length; i += lote) {
-      const { error } = await supabase.from(tabla as never).insert(filas.slice(i, i + lote) as never);
-      if (error) throw new Error(`${tabla}: ${error.message}`);
-    }
-  };
+  const agregarPaso = (texto: string, ok = true) =>
+    setPasos((p) => [...p, { texto, ok }]);
 
   const procesar = async () => {
     if (!consolidado || !detalle) {
       toast.error("Cargá los dos archivos antes de procesar.");
       return;
     }
+
     setProcesando(true);
     setErrores([]);
     setPasos([]);
-    let importacionId: string | null = null;
+
     try {
-      // 1) Validación de estructura de ambas fuentes ANTES de escribir nada.
       const fuente1 = await leerHojaExport(consolidado);
       agregarPaso(`Fuente 1 validada: hoja "Export" con ${fuente1.filas.length} filas.`);
+
       const fuente2 = await leerHojaExport(detalle);
       agregarPaso(`Fuente 2 validada: hoja "Export" con ${fuente2.filas.length} filas.`);
 
@@ -99,6 +93,7 @@ function Importar() {
         ruta: buscarColumna(fuente1.columnas, COLS_RUTA),
         cumpl: buscarColumna(fuente1.columnas, COLS_CUMPL),
       };
+
       const d = {
         cliente: buscarColumna(fuente2.columnas, COLS_CLIENTE),
         razon: buscarColumna(fuente2.columnas, COLS_RAZON),
@@ -110,12 +105,13 @@ function Importar() {
       };
 
       const faltantes: string[] = [];
-      if (!c.cliente) faltantes.push('Fuente 1: falta la columna de Cliente.');
-      if (!c.cumpl) faltantes.push('Fuente 1: falta la columna de Cumplimiento.');
-      if (!d.cliente) faltantes.push('Fuente 2: falta la columna de Cliente.');
-      if (!d.mpr) faltantes.push('Fuente 2: falta la columna de MPR.');
-      if (!d.pedido) faltantes.push('Fuente 2: falta la columna de Pedido.');
-      if (!d.sug) faltantes.push('Fuente 2: falta la columna de Sugerencia.');
+      if (!c.cliente) faltantes.push("Fuente 1: falta la columna de Cliente.");
+      if (!c.cumpl) faltantes.push("Fuente 1: falta la columna de Cumplimiento.");
+      if (!d.cliente) faltantes.push("Fuente 2: falta la columna de Cliente.");
+      if (!d.mpr) faltantes.push("Fuente 2: falta la columna de MPR.");
+      if (!d.pedido) faltantes.push("Fuente 2: falta la columna de Pedido.");
+      if (!d.sug) faltantes.push("Fuente 2: falta la columna de Sugerencia.");
+
       if (faltantes.length) {
         setErrores([
           ...faltantes,
@@ -125,103 +121,149 @@ function Importar() {
         throw new ErrorEstructura("La estructura de los archivos no coincide con lo esperado.");
       }
 
-      // 2) Cabecera de importación.
-      const { data: imp, error: errImp } = await supabase
-        .from("importaciones")
-        .insert({
-          created_by: user?.id ?? null,
-          archivo_consolidado: consolidado.name,
-          archivo_detalle: detalle.name,
-          filas_consolidado: fuente1.filas.length,
-          filas_detalle: fuente2.filas.length,
-          estado: "pendiente",
-        })
-        .select("id")
-        .single();
-      if (errImp) throw new Error(errImp.message);
-      importacionId = imp.id as string;
-
-      // 3) Copia lógica de las fuentes originales (sin modificar columnas).
-      await insertarPorLotes(
-        "origen_consolidado",
-        fuente1.filas.map((fila: FilaOriginal, i) => ({
-          importacion_id: importacionId,
-          fila: i + 1,
-          data: fila,
-        })),
-      );
-      await insertarPorLotes(
-        "origen_detalle",
-        fuente2.filas.map((fila: FilaOriginal, i) => ({
-          importacion_id: importacionId,
-          fila: i + 1,
-          data: fila,
-        })),
-      );
-      agregarPaso("Copia original de ambas fuentes guardada sin modificaciones.");
-
-      // 4) Capa de procesamiento.
-      const filasConsolidado = fuente1.filas
+      const filasConsolidado: ConsolidadoProcesado[] = fuente1.filas
         .map((f) => ({
-          importacion_id: importacionId,
           cliente: String(f[c.cliente!] ?? "").trim(),
           razon_social: c.razon ? (f[c.razon] ?? null)?.toString() ?? null : null,
           ruta: c.ruta ? (f[c.ruta] ?? null)?.toString() ?? null : null,
-          cumplimiento: aPorcentaje(f[c.cumpl!]),
+          cumplimiento: c.cumpl ? aPorcentaje(f[c.cumpl]) : null,
         }))
         .filter((f) => f.cliente);
 
-      const filasDetalle = fuente2.filas
-        .map((f) => ({
-          importacion_id: importacionId,
-          cliente: String(f[d.cliente!] ?? "").trim(),
-          razon_social: d.razon ? (f[d.razon] ?? null)?.toString() ?? null : null,
-          ruta: d.ruta ? (f[d.ruta] ?? null)?.toString() ?? null : null,
-          mpr: String(f[d.mpr!] ?? "").trim(),
-          descripcion: d.desc ? (f[d.desc] ?? null)?.toString() ?? null : null,
-          pedido: aNumero(f[d.pedido!]),
-          sugerencia: aNumero(f[d.sug!]),
-        }))
+      const filasDetalle: FilaDetalle[] = fuente2.filas
+        .map((f, i) => {
+          const pedido = Math.max(aNumero(f[d.pedido!]), 0);
+          const sugerencia = Math.max(aNumero(f[d.sug!]), 0);
+          return {
+            id: i + 1,
+            cliente: String(f[d.cliente!] ?? "").trim(),
+            razon_social: d.razon ? (f[d.razon] ?? null)?.toString() ?? null : null,
+            ruta: d.ruta ? (f[d.ruta] ?? null)?.toString() ?? null : null,
+            mpr: String(f[d.mpr!] ?? "").trim(),
+            descripcion: d.desc ? (f[d.desc] ?? null)?.toString() ?? null : null,
+            pedido,
+            sugerencia,
+            faltante: Math.max(sugerencia - pedido, 0),
+            cumplimientoPct:
+              sugerencia > 0 ? Math.min((Math.min(pedido, sugerencia) / sugerencia) * 100, 100) : 100,
+            estadoCruceCliente: null,
+            fechaVentas: null,
+          };
+        })
         .filter((f) => f.cliente && f.mpr);
 
-      await insertarPorLotes("clientes_consolidado", filasConsolidado);
-      await insertarPorLotes("detalle_mpr", filasDetalle);
-      agregarPaso(
-        `Cruce procesado: ${filasConsolidado.length} clientes y ${filasDetalle.length} líneas por MPR.`,
+      const consolidadoPorCliente = new Map(
+        filasConsolidado.map((f) => [f.cliente, f] as const),
       );
 
-      const { error: errEstado } = await supabase
-        .from("importaciones")
-        .update({ estado: "procesada" })
-        .eq("id", importacionId);
-      if (errEstado) throw new Error(errEstado.message);
+      const detallePorCliente = new Map<string, FilaDetalle[]>();
+      for (const fila of filasDetalle) {
+        const lista = detallePorCliente.get(fila.cliente);
+        if (lista) lista.push(fila);
+        else detallePorCliente.set(fila.cliente, [fila]);
+      }
 
-      agregarPaso("Importación marcada como procesada.");
-      toast.success("Importación completada.");
+      const ids = new Set<string>([
+        ...filasConsolidado.map((f) => f.cliente),
+        ...filasDetalle.map((f) => f.cliente),
+      ]);
+
+      const clientes: FilaCliente[] = [...ids].map((cliente) => {
+        const cons = consolidadoPorCliente.get(cliente);
+        const det = detallePorCliente.get(cliente) ?? [];
+
+        const sugerido = det.reduce((acc, f) => acc + f.sugerencia, 0);
+        const comprado = det.reduce(
+          (acc, f) => acc + Math.min(Math.max(f.pedido, 0), Math.max(f.sugerencia, 0)),
+          0,
+        );
+        const faltante = det.reduce((acc, f) => acc + f.faltante, 0);
+
+        const cumplimientoDetalle =
+          sugerido > 0 ? Math.min((comprado / sugerido) * 100, 100) : null;
+        const cumplimiento =
+          cons?.cumplimiento !== null && cons?.cumplimiento !== undefined
+            ? Math.max(Math.min(cons.cumplimiento, 100), 0)
+            : cumplimientoDetalle;
+
+        const primera = det[0];
+
+        return {
+          cliente,
+          razon_social:
+            cons?.razon_social?.trim() ||
+            primera?.razon_social?.trim() ||
+            "Sin razón social",
+          ruta: cons?.ruta?.trim() || primera?.ruta?.trim() || "Sin ruta",
+          cumplimientoOficial: cumplimiento,
+          sugerido,
+          comprado,
+          faltante,
+          faltantePacks: null,
+          equivalenciaPendiente: false,
+          estado: semaforo(cumplimiento),
+          estadoVista: null,
+          tieneAmbiguedad: false,
+          fechaVentas: null,
+        };
+      });
+
+      const ahora = new Date().toISOString();
+      const id =
+        typeof crypto !== "undefined" && "randomUUID" in crypto
+          ? crypto.randomUUID()
+          : `local-${Date.now()}`;
+
+      const importacion: Importacion = {
+        id,
+        created_at: ahora,
+        archivo_consolidado: consolidado.name,
+        archivo_detalle: detalle.name,
+        filas_consolidado: filasConsolidado.length,
+        filas_detalle: filasDetalle.length,
+        estado: "procesada",
+        notas: "Procesado y guardado únicamente en este navegador.",
+      };
+
+      await guardarImportacionLocal({ importacion, clientes, detalle: filasDetalle });
+
+      agregarPaso(
+        `Cruce procesado: ${clientes.length} clientes y ${filasDetalle.length} líneas por MPR.`,
+      );
+      agregarPaso("Datos guardados localmente en este dispositivo.");
+
+      toast.success("Importación completada");
       setConsolidado(null);
       setDetalle(null);
-      qc.invalidateQueries({ queryKey: ["cruce"] });
-      qc.invalidateQueries({ queryKey: ["importaciones"] });
+
+      await Promise.all([
+        qc.invalidateQueries({ queryKey: ["cruce"] }),
+        qc.invalidateQueries({ queryKey: ["importaciones"] }),
+      ]);
     } catch (error) {
-      if (importacionId) {
-        await supabase
-          .from("importaciones")
-          .update({ estado: "error", notas: error instanceof Error ? error.message : null })
-          .eq("id", importacionId);
-      }
-      const msg = error instanceof Error ? error.message : "Error desconocido en la importación";
+      const msg =
+        error instanceof Error ? error.message : "Error desconocido en la importación";
       setErrores((prev) => (prev.length ? prev : [msg]));
       agregarPaso(msg, false);
       toast.error(msg);
     } finally {
       setProcesando(false);
-      qc.invalidateQueries({ queryKey: ["importaciones"] });
     }
   };
 
   return (
-    <AppShell titulo="Importar" subtitulo="Dos archivos Excel originales · hoja «Export»">
+    <AppShell
+      titulo="Importar"
+      subtitulo="Datos privados · guardados solo en este dispositivo"
+    >
       <div className="space-y-4">
+        <div className="rounded-2xl border border-primary/30 bg-primary/10 p-4 text-sm">
+          <p className="font-bold">Modo GitHub sin Supabase</p>
+          <p className="mt-1 text-muted-foreground">
+            Los archivos se procesan dentro de tu navegador. No se publican en GitHub ni se envían a una base externa.
+          </p>
+        </div>
+
         <CampoArchivo
           numero={1}
           titulo="Consolidado por cliente"
@@ -229,10 +271,11 @@ function Importar() {
           archivo={consolidado}
           onArchivo={setConsolidado}
         />
+
         <CampoArchivo
           numero={2}
           titulo="Detalle por cliente + MPR"
-          detalle="Cliente, MPR, Pedido, Sugerencia y Cumplimiento."
+          detalle="Cliente, MPR, Pedido y Sugerencia."
           archivo={detalle}
           onArchivo={setDetalle}
         />
@@ -242,8 +285,12 @@ function Importar() {
           disabled={procesando || !consolidado || !detalle}
           className="h-12 w-full text-base font-semibold"
         >
-          {procesando ? <Loader2 className="size-4 animate-spin" /> : <Upload className="size-4" />}
-          Validar y procesar las dos fuentes
+          {procesando ? (
+            <Loader2 className="size-4 animate-spin" />
+          ) : (
+            <Upload className="size-4" />
+          )}
+          Validar y guardar en este dispositivo
         </Button>
 
         {errores.length ? (
@@ -253,9 +300,7 @@ function Importar() {
             </p>
             <ul className="mt-2 space-y-1 text-xs text-critico">
               {errores.map((e) => (
-                <li key={e} className="break-words">
-                  • {e}
-                </li>
+                <li key={e} className="break-words">• {e}</li>
               ))}
             </ul>
           </div>
@@ -278,7 +323,7 @@ function Importar() {
 
         <div className="rounded-2xl border border-border bg-surface p-4 shadow-card">
           <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
-            Últimas importaciones
+            Últimas importaciones de este dispositivo
           </p>
           {historial?.length ? (
             <ul className="mt-2 divide-y divide-border">
@@ -289,26 +334,19 @@ function Importar() {
                       {new Date(h.created_at).toLocaleString("es-AR")}
                     </p>
                     <p className="truncate text-xs text-muted-foreground">
-                      {h.filas_consolidado} filas consolidado · {h.filas_detalle} filas detalle
+                      {h.filas_consolidado} clientes · {h.filas_detalle} líneas MPR
                     </p>
                   </div>
-                  <span
-                    className={
-                      "shrink-0 rounded-full px-2.5 py-1 text-[11px] font-bold uppercase " +
-                      (h.estado === "procesada"
-                        ? "bg-exito-soft text-exito"
-                        : h.estado === "error"
-                          ? "bg-critico-soft text-critico"
-                          : "bg-muted text-muted-foreground")
-                    }
-                  >
-                    {h.estado}
+                  <span className="shrink-0 rounded-full bg-exito-soft px-2.5 py-1 text-[11px] font-bold uppercase text-exito">
+                    local
                   </span>
                 </li>
               ))}
             </ul>
           ) : (
-            <p className="mt-2 text-sm text-muted-foreground">Todavía no hay importaciones.</p>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Todavía no hay importaciones en este navegador.
+            </p>
           )}
         </div>
       </div>
@@ -333,7 +371,11 @@ function CampoArchivo({
     <label className="block cursor-pointer rounded-2xl border border-border bg-surface p-4 shadow-card">
       <div className="flex items-start gap-3">
         <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-          {archivo ? <CheckCircle2 className="size-5" /> : <FileSpreadsheet className="size-5" />}
+          {archivo ? (
+            <CheckCircle2 className="size-5" />
+          ) : (
+            <FileSpreadsheet className="size-5" />
+          )}
         </span>
         <div className="min-w-0">
           <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
