@@ -68,15 +68,16 @@ function Clientes() {
   const cumplimientoRuta = useMemo(() => {
     if (ruta === "todas") return null;
 
-    const clientesRuta = (data?.clientes ?? []).filter((c) => c.ruta === ruta);
-    const sugeridoTotal = clientesRuta.reduce((acc, c) => acc + Number(c.sugerido || 0), 0);
-    const compradoTotal = clientesRuta.reduce(
-      (acc, c) => acc + Math.min(Number(c.comprado || 0), Number(c.sugerido || 0)),
-      0,
-    );
+    const resultados = (data?.clientes ?? [])
+      .filter((c) => c.ruta === ruta)
+      .map((c) => c.cumplimientoOficial)
+      .filter((v): v is number => v !== null && v !== undefined && Number.isFinite(v));
 
-    if (sugeridoTotal <= 0) return 0;
-    return Math.min((compradoTotal / sugeridoTotal) * 100, 100);
+    if (resultados.length === 0) return 0;
+
+    // El informe oficial "Resultado por Cliente" consolida la ruta
+    // a partir del Resultado de sus clientes. No ponderamos por unidades.
+    return resultados.reduce((acc, v) => acc + v, 0) / resultados.length;
   }, [data, ruta]);
 
   const totalPaginas = Math.max(1, Math.ceil(filtrados.length / FILAS_POR_PAGINA));
@@ -157,7 +158,7 @@ function Clientes() {
                   {nf1.format(cumplimientoRuta)}%
                 </p>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  Calculado sobre sugerido y comprado de toda la ruta.
+                  Resultado oficial consolidado de los clientes de la ruta.
                 </p>
               </div>
             ) : null}
