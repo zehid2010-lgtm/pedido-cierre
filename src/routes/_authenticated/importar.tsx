@@ -265,6 +265,26 @@ function Importar() {
       }
 
       const resultadosRuta: Record<string, number> = {};
+      let resultadoJefe: number | null = null;
+
+      if (c.jefe && c.cumpl) {
+        for (const f of fuente1.filas) {
+          if (!esJefeRicardoZehid(f[c.jefe])) continue;
+
+          const rutaFila = c.ruta ? normalizarRuta(f[c.ruta]) : "";
+          const clienteFila = c.cliente ? normalizarClienteId(f[c.cliente]) : "";
+
+          const sinRuta = !rutaFila || !/^\d{4}$/.test(rutaFila);
+          const sinCliente = !clienteFila || !/^\d{5,}$/.test(clienteFila);
+          if (!sinRuta || !sinCliente) continue;
+
+          const resultado = aPorcentaje(f[c.cumpl]);
+          if (Number.isFinite(resultado)) {
+            resultadoJefe = resultado;
+            break;
+          }
+        }
+      }
 
       // El archivo "Resultado Por Cliente" ya trae el consolidado oficial
       // en la fila de cada ruta (ej. 3140 = 56,9%). Lo conservamos tal cual.
@@ -410,6 +430,7 @@ function Importar() {
         clientes,
         detalle: filasDetalle,
         resultadosRuta,
+        resultadoJefe,
       });
 
       agregarPaso(
@@ -422,6 +443,9 @@ function Importar() {
         .join(" · ");
       if (rutasOficiales) {
         agregarPaso(`Consolidados oficiales detectados: ${rutasOficiales}`);
+      }
+      if (resultadoJefe !== null) {
+        agregarPaso(`Total oficial Ricardo Zehid: ${nf1Local(resultadoJefe)}%`);
       }
       agregarPaso("Datos guardados localmente en este dispositivo.");
 
@@ -451,7 +475,7 @@ function Importar() {
     >
       <div className="space-y-4">
         <div className="rounded-2xl border border-primary/30 bg-primary/10 p-4 text-sm">
-          <p className="font-bold">Modo GitHub sin Supabase · Importador v23</p>
+          <p className="font-bold">Modo GitHub sin Supabase · Importador v24</p>
           <p className="mt-1 text-muted-foreground">
             Los archivos se procesan dentro de tu navegador. No se publican en GitHub ni se envían a una base externa.
           </p>
