@@ -38,10 +38,19 @@ export const Route = createFileRoute("/_authenticated/importar")({
   component: Importar,
 });
 
-const COLS_CLIENTE = ["numero de cliente", "nro cliente", "cliente", "codigo cliente", "cod cliente"];
+const COLS_ID_CLIENTE = [
+  "out-cli",
+  "out cli",
+  "outnum",
+  "out num",
+  "numero de cliente",
+  "nro cliente",
+  "codigo cliente",
+  "cod cliente",
+];
 const COLS_RAZON = ["razon social", "nombre cliente", "razon", "nombre"];
 const COLS_RUTA = ["ruta", "route", "zona"];
-const COLS_CUMPL = ["cumplimiento", "% cumplimiento", "cumpl", "porcentaje"];
+const COLS_CUMPL = ["resultado", "cumplimiento", "% cumplimiento", "cumpl", "porcentaje"];
 const COLS_MPR = ["mpr", "material", "codigo mpr", "producto"];
 const COLS_DESC = ["descripcion", "descripcion mpr", "detalle", "descripcion material"];
 const COLS_PEDIDO = ["pedido", "comprado", "pedido unidades"];
@@ -55,6 +64,30 @@ type ConsolidadoProcesado = {
   ruta: string | null;
   cumplimiento: number | null;
 };
+
+function buscarIdCliente(columnas: string[]): string | null {
+  return buscarColumna(columnas, COLS_ID_CLIENTE) ?? buscarColumna(columnas, ["cliente"]);
+}
+
+function buscarRazonSocial(columnas: string[], columnaId: string | null): string | null {
+  const directa = buscarColumna(columnas, COLS_RAZON);
+  if (directa) return directa;
+
+  const columnaCliente = buscarColumna(columnas, ["cliente"]);
+  return columnaCliente && columnaCliente !== columnaId ? columnaCliente : null;
+}
+
+function normalizarRuta(valor: unknown): string {
+  const texto = String(valor ?? "").trim();
+  const soloDigitos = texto.replace(/\D/g, "");
+  if (!soloDigitos) return texto;
+  return String(Number(soloDigitos));
+}
+
+function esRutaDesarrolloTucuman(valor: unknown): boolean {
+  const ruta = Number(normalizarRuta(valor));
+  return Number.isFinite(ruta) && ruta >= 3140 && ruta <= 3145;
+}
 
 function Importar() {
   const qc = useQueryClient();
@@ -130,16 +163,19 @@ function Importar() {
       const fuente2 = await leerHojaExport(detalle);
       agregarPaso(`Fuente 2 validada: hoja "Export" con ${fuente2.filas.length} filas.`);
 
+      const cCliente = buscarIdCliente(fuente1.columnas);
+      const dCliente = buscarIdCliente(fuente2.columnas);
+
       const c = {
-        cliente: buscarColumna(fuente1.columnas, COLS_CLIENTE),
-        razon: buscarColumna(fuente1.columnas, COLS_RAZON),
+        cliente: cCliente,
+        razon: buscarRazonSocial(fuente1.columnas, cCliente),
         ruta: buscarColumna(fuente1.columnas, COLS_RUTA),
         cumpl: buscarColumna(fuente1.columnas, COLS_CUMPL),
       };
 
       const d = {
-        cliente: buscarColumna(fuente2.columnas, COLS_CLIENTE),
-        razon: buscarColumna(fuente2.columnas, COLS_RAZON),
+        cliente: dCliente,
+        razon: buscarRazonSocial(fuente2.columnas, dCliente),
         ruta: buscarColumna(fuente2.columnas, COLS_RUTA),
         mpr: buscarColumna(fuente2.columnas, COLS_MPR),
         desc: buscarColumna(fuente2.columnas, COLS_DESC),
@@ -165,15 +201,17 @@ function Importar() {
       }
 
       const filasConsolidado: ConsolidadoProcesado[] = fuente1.filas
+        .filter((f) => !c.ruta || esRutaDesarrolloTucuman(f[c.ruta]))
         .map((f) => ({
           cliente: String(f[c.cliente!] ?? "").trim(),
           razon_social: c.razon ? (f[c.razon] ?? null)?.toString() ?? null : null,
-          ruta: c.ruta ? (f[c.ruta] ?? null)?.toString() ?? null : null,
+          ruta: c.ruta ? normalizarRuta(f[c.ruta]) : null,
           cumplimiento: c.cumpl ? aPorcentaje(f[c.cumpl]) : null,
         }))
         .filter((f) => f.cliente);
 
       const filasDetalle: FilaDetalle[] = fuente2.filas
+        .filter((f) => !d.ruta || esRutaDesarrolloTucuman(f[d.ruta]))
         .map((f, i) => {
           const pedido = Math.max(aNumero(f[d.pedido!]), 0);
           const sugerencia = Math.max(aNumero(f[d.sug!]), 0);
@@ -181,7 +219,7 @@ function Importar() {
             id: i + 1,
             cliente: String(f[d.cliente!] ?? "").trim(),
             razon_social: d.razon ? (f[d.razon] ?? null)?.toString() ?? null : null,
-            ruta: d.ruta ? (f[d.ruta] ?? null)?.toString() ?? null : null,
+            ruta: d.ruta ? normalizarRuta(f[d.ruta]) : null,
             mpr: String(f[d.mpr!] ?? "").trim(),
             descripcion: d.desc ? (f[d.desc] ?? null)?.toString() ?? null : null,
             pedido,
@@ -273,6 +311,7 @@ function Importar() {
       agregarPaso(
         `Cruce procesado: ${clientes.length} clientes y ${filasDetalle.length} líneas por MPR.`,
       );
+      agregarPaso("Filtro aplicado: rutas Desarrollo Tucumán 3140 a 3145.");
       agregarPaso("Datos guardados localmente en este dispositivo.");
 
       toast.success("Importación completada");
