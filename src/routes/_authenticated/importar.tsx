@@ -1,13 +1,15 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { AlertCircle, CheckCircle2, FileSpreadsheet, Loader2, Upload } from "lucide-react";
+import { AlertCircle, CheckCircle2, Download, FileJson, FileSpreadsheet, Loader2, Upload } from "lucide-react";
 import { toast } from "sonner";
 
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import {
+  crearRespaldoLocal,
   guardarImportacionLocal,
+  restaurarRespaldoLocal,
   semaforo,
   traerImportaciones,
   type FilaCliente,
@@ -69,6 +71,47 @@ function Importar() {
 
   const agregarPaso = (texto: string, ok = true) =>
     setPasos((p) => [...p, { texto, ok }]);
+
+  const descargarRespaldo = async () => {
+    const respaldo = await crearRespaldoLocal();
+    if (!respaldo) {
+      toast.error("Todavía no hay datos locales para respaldar.");
+      return;
+    }
+
+    const blob = new Blob([JSON.stringify(respaldo)], {
+      type: "application/json;charset=utf-8",
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `pedido-sugerido-respaldo-${new Date()
+      .toISOString()
+      .slice(0, 10)}.json`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    toast.success("Respaldo descargado");
+  };
+
+  const restaurarRespaldo = async (archivo: File | null) => {
+    if (!archivo) return;
+    try {
+      const texto = await archivo.text();
+      await restaurarRespaldoLocal(JSON.parse(texto));
+      await Promise.all([
+        qc.invalidateQueries({ queryKey: ["cruce"] }),
+        qc.invalidateQueries({ queryKey: ["equivalencias"] }),
+        qc.invalidateQueries({ queryKey: ["importaciones"] }),
+      ]);
+      toast.success("Respaldo restaurado");
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "No se pudo restaurar el respaldo.",
+      );
+    }
+  };
 
   const procesar = async () => {
     if (!consolidado || !detalle) {
@@ -262,6 +305,32 @@ function Importar() {
           <p className="mt-1 text-muted-foreground">
             Los archivos se procesan dentro de tu navegador. No se publican en GitHub ni se envían a una base externa.
           </p>
+        </div>
+
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <Button
+            type="button"
+            variant="secondary"
+            className="h-11"
+            onClick={() => void descargarRespaldo()}
+          >
+            <Download className="size-4" />
+            Descargar respaldo
+          </Button>
+
+          <label className="inline-flex h-11 cursor-pointer items-center justify-center gap-2 rounded-md border border-input bg-background px-4 text-sm font-medium hover:bg-accent">
+            <FileJson className="size-4" />
+            Restaurar respaldo
+            <input
+              type="file"
+              accept=".json,application/json"
+              className="hidden"
+              onChange={(e) => {
+                void restaurarRespaldo(e.target.files?.[0] ?? null);
+                e.currentTarget.value = "";
+              }}
+            />
+          </label>
         </div>
 
         <CampoArchivo
