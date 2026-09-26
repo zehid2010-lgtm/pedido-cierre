@@ -85,6 +85,7 @@ export type Cruce = {
   detalle: FilaDetalle[];
   equivalencias: Map<string, number>;
   descripcionesEquiv: Map<string, string>;
+  resultadosRuta: Record<string, number>;
   cumplimientoGeneral: number | null;
 };
 
@@ -93,6 +94,7 @@ type SnapshotLocal = {
   importacion: Importacion;
   clientes: FilaCliente[];
   detalle: FilaDetalle[];
+  resultadosRuta?: Record<string, number>;
 };
 
 export type RespaldoLocal = {
@@ -146,12 +148,14 @@ export async function guardarImportacionLocal(args: {
   importacion: Importacion;
   clientes: FilaCliente[];
   detalle: FilaDetalle[];
+  resultadosRuta?: Record<string, number>;
 }): Promise<void> {
   const snapshot: SnapshotLocal = {
     version: 1,
     importacion: args.importacion,
     clientes: args.clientes,
     detalle: args.detalle,
+    resultadosRuta: args.resultadosRuta ?? {},
   };
 
   await localSet(KEY_SNAPSHOT, snapshot);
@@ -285,6 +289,7 @@ export async function traerCruce(): Promise<Cruce | null> {
     detalle: snapshot.detalle,
     equivalencias: mapaEquiv,
     descripcionesEquiv: descripciones,
+    resultadosRuta: snapshot.resultadosRuta ?? {},
     cumplimientoGeneral,
   };
 }
