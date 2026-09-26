@@ -86,6 +86,7 @@ export type Cruce = {
   equivalencias: Map<string, number>;
   descripcionesEquiv: Map<string, string>;
   resultadosRuta: Record<string, number>;
+  resultadoJefe: number | null;
   cumplimientoGeneral: number | null;
 };
 
@@ -95,6 +96,7 @@ type SnapshotLocal = {
   clientes: FilaCliente[];
   detalle: FilaDetalle[];
   resultadosRuta?: Record<string, number>;
+  resultadoJefe?: number | null;
 };
 
 export type RespaldoLocal = {
@@ -149,6 +151,7 @@ export async function guardarImportacionLocal(args: {
   clientes: FilaCliente[];
   detalle: FilaDetalle[];
   resultadosRuta?: Record<string, number>;
+  resultadoJefe?: number | null;
 }): Promise<void> {
   const snapshot: SnapshotLocal = {
     version: 1,
@@ -156,6 +159,7 @@ export async function guardarImportacionLocal(args: {
     clientes: args.clientes,
     detalle: args.detalle,
     resultadosRuta: args.resultadosRuta ?? {},
+    resultadoJefe: args.resultadoJefe ?? null,
   };
 
   await localSet(KEY_SNAPSHOT, snapshot);
@@ -278,10 +282,14 @@ export async function traerCruce(): Promise<Cruce | null> {
     (acc, c) => acc + Math.min(c.comprado, c.sugerido),
     0,
   );
-  const cumplimientoGeneral =
+  const cumplimientoCalculado =
     sugeridoTotal > 0
       ? Math.min((compradoTotal / sugeridoTotal) * 100, 100)
       : null;
+  const cumplimientoGeneral =
+    snapshot.resultadoJefe !== null && snapshot.resultadoJefe !== undefined
+      ? snapshot.resultadoJefe
+      : cumplimientoCalculado;
 
   return {
     importacion: snapshot.importacion,
@@ -290,6 +298,7 @@ export async function traerCruce(): Promise<Cruce | null> {
     equivalencias: mapaEquiv,
     descripcionesEquiv: descripciones,
     resultadosRuta: snapshot.resultadosRuta ?? {},
+    resultadoJefe: snapshot.resultadoJefe ?? null,
     cumplimientoGeneral,
   };
 }
