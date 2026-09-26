@@ -95,10 +95,10 @@ export function aTexto(valor: unknown): string {
 }
 
 export const CANDIDATOS = {
-  cliente: ["numero de cliente", "nro cliente", "n cliente", "cod cliente", "codigo cliente", "cliente"],
+  cliente: ["out-cli", "out cli", "outnum", "out num", "numero de cliente", "nro cliente", "n cliente", "cod cliente", "codigo cliente", "cliente"],
   razonSocial: ["razon social", "nombre cliente", "nombre del cliente", "descripcion cliente", "razon"],
   ruta: ["ruta", "reparto", "route"],
-  cumplimiento: ["cumplimiento", "cumpl", "porcentaje cumplimiento", "compliance"],
+  cumplimiento: ["resultado", "cumplimiento", "cumpl", "porcentaje cumplimiento", "compliance"],
   mpr: ["mpr", "material", "sku", "producto", "codigo producto"],
   descripcion: ["descripcion mpr", "descripcion producto", "descripcion", "detalle", "producto descripcion"],
   pedido: ["pedido", "comprado", "compra", "venta", "cantidad pedido"],
