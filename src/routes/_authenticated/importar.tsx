@@ -59,6 +59,9 @@ const COLS_SUG = ["sugerencia", "sugerido", "sugerencia unidades"];
 
 type Paso = { texto: string; ok: boolean };
 
+const nf1Local = (valor: number) =>
+  new Intl.NumberFormat("es-AR", { maximumFractionDigits: 1 }).format(valor);
+
 type ConsolidadoProcesado = {
   cliente: string;
   razon_social: string | null;
@@ -261,6 +264,33 @@ function Importar() {
         throw new ErrorEstructura("La estructura de los archivos no coincide con lo esperado.");
       }
 
+      const resultadosRuta: Record<string, number> = {};
+
+      // El archivo "Resultado Por Cliente" ya trae el consolidado oficial
+      // en la fila de cada ruta (ej. 3140 = 56,9%). Lo conservamos tal cual.
+      if (c.ruta && c.cumpl) {
+        for (const f of fuente1.filas) {
+          const rutaFila = normalizarRuta(f[c.ruta]);
+          if (!esRutaDesarrolloTucuman(rutaFila)) continue;
+
+          const clienteFila = c.cliente ? normalizarClienteId(f[c.cliente]) : "";
+          const esFilaRuta = !clienteFila || !/^\d{5,}$/.test(clienteFila);
+          if (!esFilaRuta) continue;
+
+          const resultado = aPorcentaje(f[c.cumpl]);
+          if (!Number.isFinite(resultado)) continue;
+
+          // Si existe Jefe y viene informado en la fila, exigimos Ricardo Zehid.
+          // Si la fila de ruta viene sin Jefe por la jerarquía del reporte, igual la tomamos.
+          if (c.jefe) {
+            const jefeFila = String(f[c.jefe] ?? "").trim();
+            if (jefeFila && !esJefeRicardoZehid(jefeFila)) continue;
+          }
+
+          resultadosRuta[rutaFila] = resultado;
+        }
+      }
+
       const filasConsolidado: ConsolidadoProcesado[] = fuente1.filas
         .filter((f) => {
           if (c.jefe) return esJefeRicardoZehid(f[c.jefe]);
@@ -375,12 +405,24 @@ function Importar() {
         notas: "Procesado y guardado únicamente en este navegador.",
       };
 
-      await guardarImportacionLocal({ importacion, clientes, detalle: filasDetalle });
+      await guardarImportacionLocal({
+        importacion,
+        clientes,
+        detalle: filasDetalle,
+        resultadosRuta,
+      });
 
       agregarPaso(
         `Cruce procesado: ${clientes.length} clientes y ${filasDetalle.length} líneas por MPR.`,
       );
       agregarPaso("Filtro aplicado: solo clientes y rutas del Jefe Ricardo Zehid.");
+      const rutasOficiales = Object.entries(resultadosRuta)
+        .sort(([a], [b]) => Number(a) - Number(b))
+        .map(([r, v]) => `${r}: ${nf1Local(v)}%`)
+        .join(" · ");
+      if (rutasOficiales) {
+        agregarPaso(`Consolidados oficiales detectados: ${rutasOficiales}`);
+      }
       agregarPaso("Datos guardados localmente en este dispositivo.");
 
       toast.success("Importación completada");
@@ -409,7 +451,7 @@ function Importar() {
     >
       <div className="space-y-4">
         <div className="rounded-2xl border border-primary/30 bg-primary/10 p-4 text-sm">
-          <p className="font-bold">Modo GitHub sin Supabase · Importador v22</p>
+          <p className="font-bold">Modo GitHub sin Supabase · Importador v23</p>
           <p className="mt-1 text-muted-foreground">
             Los archivos se procesan dentro de tu navegador. No se publican en GitHub ni se envían a una base externa.
           </p>
