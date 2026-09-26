@@ -68,15 +68,18 @@ function Clientes() {
   const cumplimientoRuta = useMemo(() => {
     if (ruta === "todas") return null;
 
+    const oficial = data?.resultadosRuta?.[ruta];
+    if (oficial !== undefined && oficial !== null && Number.isFinite(oficial)) {
+      return oficial;
+    }
+
+    // Respaldo para importaciones anteriores que no guardaban el total de ruta.
     const resultados = (data?.clientes ?? [])
       .filter((c) => c.ruta === ruta)
       .map((c) => c.cumplimientoOficial)
       .filter((v): v is number => v !== null && v !== undefined && Number.isFinite(v));
 
     if (resultados.length === 0) return 0;
-
-    // El informe oficial "Resultado por Cliente" consolida la ruta
-    // a partir del Resultado de sus clientes. No ponderamos por unidades.
     return resultados.reduce((acc, v) => acc + v, 0) / resultados.length;
   }, [data, ruta]);
 
@@ -158,7 +161,7 @@ function Clientes() {
                   {nf1.format(cumplimientoRuta)}%
                 </p>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  Resultado oficial consolidado de los clientes de la ruta.
+                  Resultado oficial de la fila consolidada de la ruta en el informe.
                 </p>
               </div>
             ) : null}
