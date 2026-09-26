@@ -177,8 +177,21 @@ function Importar() {
       const fuente2 = await leerHojaExport(detalle);
       agregarPaso(`Fuente 2 validada: hoja "Export" con ${fuente2.filas.length} filas.`);
 
-      const cCliente = buscarIdCliente(fuente1.columnas);
-      const dCliente = buscarIdCliente(fuente2.columnas);
+      const resultadoFuente1 = buscarColumna(fuente1.columnas, COLS_CUMPL);
+      const indiceResultadoFuente1 = resultadoFuente1
+        ? fuente1.columnas.indexOf(resultadoFuente1)
+        : -1;
+
+      const cCliente =
+        buscarIdCliente(fuente1.columnas) ??
+        (indiceResultadoFuente1 > 0 ? fuente1.columnas[indiceResultadoFuente1 - 1] : null) ??
+        fuente1.columnas[4] ??
+        null;
+
+      const dCliente =
+        buscarIdCliente(fuente2.columnas) ??
+        fuente2.columnas[0] ??
+        null;
 
       const c = {
         cliente: cCliente,
@@ -354,7 +367,7 @@ function Importar() {
     >
       <div className="space-y-4">
         <div className="rounded-2xl border border-primary/30 bg-primary/10 p-4 text-sm">
-          <p className="font-bold">Modo GitHub sin Supabase · Importador v20</p>
+          <p className="font-bold">Modo GitHub sin Supabase · Importador v21</p>
           <p className="mt-1 text-muted-foreground">
             Los archivos se procesan dentro de tu navegador. No se publican en GitHub ni se envían a una base externa.
           </p>
