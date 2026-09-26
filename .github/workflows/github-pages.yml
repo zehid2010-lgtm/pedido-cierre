@@ -63,6 +63,9 @@ jobs:
             cp "$INDEX_FILE" _site/404.html
           fi
 
+          mkdir -p _site/importar-v21
+          cp _site/index.html _site/importar-v21/index.html
+
           touch _site/.nojekyll
           echo "Prepared GitHub Pages artifact:"
           find _site -maxdepth 2 -type f | sort | head -n 100
