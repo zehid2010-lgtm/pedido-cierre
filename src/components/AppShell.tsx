@@ -6,7 +6,6 @@ import {
   ClipboardList,
   Clock3,
   Lightbulb,
-  LogOut,
   Upload,
   Users,
 } from "lucide-react";
@@ -83,7 +82,7 @@ export function AppShell({
   subtitulo?: string | undefined;
   children: ReactNode;
 }) {
-  const { nombre, rol, esAdmin, cerrarSesion } = useAuth();
+  const { nombre, rol, esAdmin } = useAuth();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const items = NAV.filter((i) => !i.soloAdmin || esAdmin);
 
@@ -181,17 +180,9 @@ export function AppShell({
                 <div className="ps-user-avatar">{iniciales}</div>
                 <div className="ps-user-info">
                   <strong>{nombre || "Usuario"}</strong>
-                  <span>{rol ?? ""}</span>
+                  <span>{rol ? `${rol} · local` : "local"}</span>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={() => void cerrarSesion()}
-                  className="ps-logout"
-                  aria-label="Cerrar sesión"
-                >
-                  <LogOut />
-                </button>
               </div>
             </div>
 
