@@ -67,6 +67,8 @@ jobs:
           cp _site/index.html _site/importar-v21/index.html
           mkdir -p _site/importar-v22
           cp _site/index.html _site/importar-v22/index.html
+          mkdir -p _site/importar-v23
+          cp _site/index.html _site/importar-v23/index.html
 
           touch _site/.nojekyll
           echo "Prepared GitHub Pages artifact:"
