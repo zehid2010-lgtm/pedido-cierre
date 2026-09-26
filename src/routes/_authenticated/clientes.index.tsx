@@ -152,7 +152,19 @@ function Clientes() {
                 : `Mostrando ${inicio + 1}–${fin} de ${filtrados.length} clientes`}
             </p>
 
-            {ruta !== "todas" && cumplimientoRuta !== null ? (
+            {ruta === "todas" && data.resultadoJefe !== null ? (
+              <div className="rounded-xl border border-primary/30 bg-primary/10 px-4 py-3">
+                <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                  Ricardo Zehid · Total
+                </p>
+                <p className="numero-tabular mt-1 text-3xl font-bold text-foreground">
+                  {nf1.format(data.resultadoJefe)}%
+                </p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Resultado oficial de la fila consolidada del jefe en el informe.
+                </p>
+              </div>
+            ) : ruta !== "todas" && cumplimientoRuta !== null ? (
               <div className="rounded-xl border border-primary/30 bg-primary/10 px-4 py-3">
                 <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
                   Ruta {ruta} · Consolidado
