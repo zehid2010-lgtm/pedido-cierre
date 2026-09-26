@@ -1,0 +1,30 @@
+name: Verify GitHub-only build
+
+on:
+  push:
+    branches:
+      - github-only
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Build static SPA without Supabase
+        env:
+          GITHUB_PAGES: "true"
+        run: bun run build
