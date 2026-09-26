@@ -50,6 +50,7 @@ const COLS_ID_CLIENTE = [
 ];
 const COLS_RAZON = ["razon social", "nombre cliente", "razon", "nombre"];
 const COLS_RUTA = ["ruta", "route", "zona"];
+const COLS_JEFE = ["jefe", "jefe objetivo", "jdv"];
 const COLS_CUMPL = ["resultado", "cumplimiento", "% cumplimiento", "cumpl", "porcentaje"];
 const COLS_MPR = ["mpr", "material", "codigo mpr", "producto"];
 const COLS_DESC = ["descripcion", "descripcion mpr", "detalle", "descripcion material"];
@@ -101,6 +102,17 @@ function normalizarRuta(valor: unknown): string {
 function esRutaDesarrolloTucuman(valor: unknown): boolean {
   const ruta = Number(normalizarRuta(valor));
   return Number.isFinite(ruta) && ruta >= 3140 && ruta <= 3145;
+}
+
+function esJefeRicardoZehid(valor: unknown): boolean {
+  const texto = String(valor ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+
+  return texto.includes("ricardo") && texto.includes("zehid");
 }
 
 function Importar() {
@@ -197,6 +209,7 @@ function Importar() {
         cliente: cCliente,
         razon: buscarRazonSocial(fuente1.columnas, cCliente),
         ruta: buscarColumna(fuente1.columnas, COLS_RUTA),
+        jefe: buscarColumna(fuente1.columnas, COLS_JEFE),
         cumpl: buscarColumna(fuente1.columnas, COLS_CUMPL),
       };
 
@@ -204,6 +217,7 @@ function Importar() {
         cliente: dCliente,
         razon: buscarRazonSocial(fuente2.columnas, dCliente),
         ruta: buscarColumna(fuente2.columnas, COLS_RUTA),
+        jefe: buscarColumna(fuente2.columnas, COLS_JEFE),
         mpr: buscarColumna(fuente2.columnas, COLS_MPR),
         desc: buscarColumna(fuente2.columnas, COLS_DESC),
         pedido: buscarColumna(fuente2.columnas, COLS_PEDIDO),
@@ -228,7 +242,10 @@ function Importar() {
       }
 
       const filasConsolidado: ConsolidadoProcesado[] = fuente1.filas
-        .filter((f) => !c.ruta || esRutaDesarrolloTucuman(f[c.ruta]))
+        .filter((f) => {
+          if (c.jefe) return esJefeRicardoZehid(f[c.jefe]);
+          return !c.ruta || esRutaDesarrolloTucuman(f[c.ruta]);
+        })
         .map((f) => ({
           cliente: String(f[c.cliente!] ?? "").trim(),
           razon_social: c.razon ? (f[c.razon] ?? null)?.toString() ?? null : null,
@@ -238,7 +255,10 @@ function Importar() {
         .filter((f) => f.cliente);
 
       const filasDetalle: FilaDetalle[] = fuente2.filas
-        .filter((f) => !d.ruta || esRutaDesarrolloTucuman(f[d.ruta]))
+        .filter((f) => {
+          if (d.jefe) return esJefeRicardoZehid(f[d.jefe]);
+          return !d.ruta || esRutaDesarrolloTucuman(f[d.ruta]);
+        })
         .map((f, i) => {
           const pedido = Math.max(aNumero(f[d.pedido!]), 0);
           const sugerencia = Math.max(aNumero(f[d.sug!]), 0);
@@ -338,7 +358,7 @@ function Importar() {
       agregarPaso(
         `Cruce procesado: ${clientes.length} clientes y ${filasDetalle.length} líneas por MPR.`,
       );
-      agregarPaso("Filtro aplicado: rutas Desarrollo Tucumán 3140 a 3145.");
+      agregarPaso("Filtro aplicado: solo clientes y rutas del Jefe Ricardo Zehid.");
       agregarPaso("Datos guardados localmente en este dispositivo.");
 
       toast.success("Importación completada");
